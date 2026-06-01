@@ -49,10 +49,19 @@ def create_order(
     # Calculate subtotal based on database prices (anti-fraud check)
     subtotal = 0.0
     for item in items_list:
-        prod = db.query(Product).filter(Product.id == item["product_id"]).first()
-        if not prod:
-            raise HTTPException(status_code=404, detail=f"Product {item['title']} not found.")
-        subtotal += prod.base_price * int(item["quantity"])
+        prod = None
+        if item["product_id"] == "custom-tshirt-canvas":
+            prod = db.query(Product).filter(Product.is_customizable == True).first()
+            if not prod:
+                raise HTTPException(status_code=404, detail="No customizable base product template seeded in database.")
+            price_to_add = float(item.get("price", prod.base_price))
+        else:
+            prod = db.query(Product).filter(Product.id == item["product_id"]).first()
+            if not prod:
+                raise HTTPException(status_code=404, detail=f"Product {item['title']} not found.")
+            price_to_add = prod.base_price
+            
+        subtotal += price_to_add * int(item["quantity"])
         
     # Apply promo discounts
     discount = 0.0
