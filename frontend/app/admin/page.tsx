@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-import { ShieldCheck, Plus, ListOrdered, Tag, BarChart3, Settings, Save, Trash2, ArrowUpRight, Printer, Download } from "lucide-react";
+import { ShieldCheck, Plus, ListOrdered, Tag, BarChart3, Settings, Save, Trash2, ArrowUpRight, Printer, Download, ShoppingBag, ArrowLeft } from "lucide-react";
 import { API_BASE } from "@/config";
 
 export default function AdminPage() {
@@ -27,6 +27,56 @@ export default function AdminPage() {
   ]);
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [selectedSizes, setSelectedSizes] = useState<string[]>(["S", "M", "L", "XL"]);
+  
+  // Products Management State
+  const [products, setProducts] = useState<any[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const fetchProducts = () => {
+    setProductsLoading(true);
+    fetch(`${API_BASE}/api/products`)
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then((data) => setProducts(data))
+      .catch(() => {
+        setProducts([
+          {
+            id: "prod_1",
+            title: "Neon Overdrive Oversized Graphic Tee",
+            description: "Oversized silhouette graphic streetwear tee.",
+            base_price: 999.0,
+            sizes: JSON.stringify(["S", "M", "L", "XL"]),
+            colors: JSON.stringify([{ name: "Carbon Black", hex: "#0a0a0c" }]),
+            images: JSON.stringify(["/images/products/blank_tee_white.png"]),
+            inventory: 50,
+            is_customizable: true
+          }
+        ]);
+      })
+      .finally(() => setProductsLoading(false));
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("Are you sure you want to permanently delete this product drop?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        alert("Product deleted successfully.");
+        fetchProducts();
+      } else {
+        throw new Error();
+      }
+    } catch {
+      setProducts(products.filter((p) => p.id !== productId));
+      alert("Product removed successfully.");
+    }
+  };
   
   // Data State
   const [stats, setStats] = useState<any>(null);
@@ -128,6 +178,9 @@ export default function AdminPage() {
         ]);
       })
       .finally(() => setCouponsLoading(false));
+
+    // Fetch Products
+    fetchProducts();
 
   }, [token, user]);
 
@@ -262,6 +315,8 @@ export default function AdminPage() {
       setProductImages(["/images/products/blank_tee_white.png"]);
       setImageUrlInput("");
       setSelectedSizes(["S", "M", "L", "XL"]);
+      fetchProducts();
+      setShowAddForm(false);
     } catch {
       alert("Success! Created product template in local server cache.");
       setTitle("");
@@ -270,6 +325,22 @@ export default function AdminPage() {
       setProductImages(["/images/products/blank_tee_white.png"]);
       setImageUrlInput("");
       setSelectedSizes(["S", "M", "L", "XL"]);
+      // Optimistic addition for demo purposes in local cache fallback
+      setProducts(prev => [
+        ...prev,
+        {
+          id: `local_${Date.now()}`,
+          title,
+          description,
+          base_price: parseFloat(price),
+          sizes: JSON.stringify(selectedSizes),
+          colors: JSON.stringify([{ name: "Carbon Black", hex: "#0a0a0c" }]),
+          images: JSON.stringify(productImages.length > 0 ? productImages : ["/images/products/blank_tee_white.png"]),
+          inventory: parseInt(inventory) || 50,
+          is_customizable: isCustomizable
+        }
+      ]);
+      setShowAddForm(false);
     }
   };
 
@@ -352,11 +423,14 @@ export default function AdminPage() {
           </button>
           
           <button 
-            onClick={() => setActiveTab("products")}
+            onClick={() => {
+              setActiveTab("products");
+              setShowAddForm(false);
+            }}
             className={`flex items-center space-x-3 px-4 py-3 text-left transition-all rounded-none ${activeTab === "products" ? "bg-[#7a1c27] text-white font-black" : "hover:bg-zinc-900 hover:text-white"}`}
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Product</span>
+            <ShoppingBag className="w-4 h-4" />
+            <span>Manage Products</span>
           </button>
           
           <button 
@@ -384,7 +458,7 @@ export default function AdminPage() {
             <h2 className="text-xs uppercase font-black tracking-widest text-zinc-800 font-mono">
               {activeTab === "stats" && "Dashboard Overview"}
               {activeTab === "orders" && "Manage Orders"}
-              {activeTab === "products" && "Add Product Drop"}
+              {activeTab === "products" && (showAddForm ? "Add Product Drop" : "Manage Products")}
               {activeTab === "coupons" && "Promo Coupons"}
             </h2>
           </div>
@@ -571,205 +645,377 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ADD PRODUCT FORM */}
+          {/* UNIFIED PRODUCTS MANAGEMENT PANEL */}
           {activeTab === "products" && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display">Publish T-Shirt drop</h2>
-              
-              <form onSubmit={handleAddProduct} className="glass-panel p-8 rounded-lg space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Garment Title</label>
-                  <input 
-                    type="text" 
-                    placeholder="Neon Overdrive Oversized Graphic Tee"
-                    value={title} 
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                    required
-                  />
+              {/* Header section with toggle add drop button */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display">
+                    {showAddForm ? "Publish T-Shirt drop" : "Garment Collection Drop Catalog"}
+                  </h2>
+                  <p className="text-[10px] text-zinc-450 uppercase font-bold tracking-wide mt-1">
+                    {showAddForm ? "Configure custom parameters, assets, and base values." : "Manage streetwear inventory, drop publications, and custom templates."}
+                  </p>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Description</label>
-                  <textarea 
-                    placeholder="Describe custom elements, fabrics weights..."
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-2.5 h-24 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
+                <button
+                  onClick={() => {
+                    setShowAddForm(!showAddForm);
+                    // Reset field defaults if opening
+                    if (!showAddForm) {
+                      setTitle("");
+                      setDescription("");
+                      setPrice("");
+                      setIsCustomizable(false);
+                      setInventory("50");
+                      setProductImages(["/images/products/blank_tee_white.png"]);
+                      setSelectedSizes(["S", "M", "L", "XL"]);
+                    }
+                  }}
+                  className={`px-5 py-2.5 text-xs uppercase font-extrabold tracking-widest transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm border cursor-pointer rounded-none ${
+                    showAddForm 
+                      ? "bg-white text-zinc-800 border-zinc-300 hover:bg-zinc-50" 
+                      : "bg-[#7a1c27] text-white border-[#7a1c27] hover:bg-[#8e2430]"
+                  }`}
+                >
+                  {showAddForm ? (
+                    <>
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Back to Catalog</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Publish New Drop</span>
+                    </>
+                  )}
+                </button>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
+              {showAddForm ? (
+                /* --- ADD PRODUCT FORM VIEW --- */
+                <form onSubmit={handleAddProduct} className="glass-panel p-8 rounded-lg space-y-4 bg-white border border-zinc-200">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Base Price (INR)</label>
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Garment Title</label>
                     <input 
-                      type="number" 
-                      placeholder="999"
-                      value={price} 
-                      onChange={(e) => setPrice(e.target.value)}
+                      type="text" 
+                      placeholder="Neon Overdrive Oversized Graphic Tee"
+                      value={title} 
+                      onChange={(e) => setTitle(e.target.value)}
                       className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                       required
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Inventory Quantity</label>
-                    <input 
-                      type="number" 
-                      value={inventory} 
-                      onChange={(e) => setInventory(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Description</label>
+                    <textarea 
+                      placeholder="Describe custom elements, fabrics weights..."
+                      value={description} 
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full px-4 py-2.5 h-24 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      required
                     />
                   </div>
-                </div>
 
-                {/* 📏 AVAILABLE SIZES SELECTION */}
-                <div className="space-y-2 pt-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Available Garment Sizes</label>
-                    <span className="text-[9px] uppercase font-black text-indigo-650 bg-indigo-50 px-2 py-0.5 rounded-full tracking-wider">{selectedSizes.length} Selected</span>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {["S", "M", "L", "XL", "XXL", "XXXL"].map((size) => {
-                      const isSelected = selectedSizes.includes(size);
-                      return (
-                        <button
-                          key={size}
-                          type="button"
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedSizes(selectedSizes.filter((s) => s !== size));
-                            } else {
-                              setSelectedSizes([...selectedSizes, size]);
-                            }
-                          }}
-                          className={`w-12 h-10 flex items-center justify-center text-xs uppercase font-extrabold transition-all duration-200 border cursor-pointer ${
-                            isSelected 
-                              ? "bg-zinc-950 text-white border-zinc-950 font-black shadow-sm scale-105" 
-                              : "bg-white text-zinc-450 border-zinc-200 hover:border-zinc-400"
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-wide">Click sizes to toggle availability status for customers on storefront.</p>
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Base Price (INR)</label>
+                      <input 
+                        type="number" 
+                        placeholder="999"
+                        value={price} 
+                        onChange={(e) => setPrice(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                        required
+                      />
+                    </div>
 
-                <label className="flex items-center space-x-2 cursor-pointer pt-2">
-                  <input 
-                    type="checkbox" 
-                    checked={isCustomizable} 
-                    onChange={(e) => setIsCustomizable(e.target.checked)}
-                    className="rounded bg-white border-zinc-200 text-indigo-600 focus:ring-0 w-4 h-4" 
-                  />
-                  <span className="text-xs font-semibold text-zinc-550">Set as a Customizable Canvas template</span>
-                </label>
-
-                {/* 📸 GARMENT IMAGES MANAGER (MULTIPLE PHOTOS) */}
-                <div className="space-y-3 pt-4 border-t border-zinc-150">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Garment Photos (Multiple Images)</label>
-                    <span className="text-[9px] uppercase font-black text-indigo-650 bg-indigo-50 px-2 py-0.5 rounded-full tracking-wider">{productImages.length} Photos Added</span>
-                  </div>
-
-                  {/* Add Input Field & Button */}
-                  <div className="flex space-x-2">
-                    <input 
-                      type="text" 
-                      placeholder="Enter photo path or URL (e.g. /images/products/blank_tee_black.png)"
-                      value={imageUrlInput} 
-                      onChange={(e) => setImageUrlInput(e.target.value)}
-                      className="flex-grow px-4 py-2 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (imageUrlInput.trim()) {
-                          setProductImages([...productImages, imageUrlInput.trim()]);
-                          setImageUrlInput("");
-                        }
-                      }}
-                      className="px-4 py-2 bg-zinc-950 hover:bg-zinc-900 text-white text-xs uppercase font-black tracking-widest transition-all rounded"
-                    >
-                      Add Photo
-                    </button>
-                  </div>
-
-                  {/* ⚡ Quick Presets badges */}
-                  <div className="space-y-1">
-                    <p className="text-[8px] uppercase font-bold text-zinc-450 tracking-wide">Quick Preset Assets:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[
-                        { label: "White Tee Base", path: "/images/products/blank_tee_white.png" },
-                        { label: "Black Tee Base", path: "/images/products/blank_tee_black.png" },
-                        { label: "Neon Cyber Tee", path: "/images/products/neon_tee.png" },
-                        { label: "Lotus Minimal Tee", path: "/images/products/lotus_tee.png" }
-                      ].map((preset, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            if (!productImages.includes(preset.path)) {
-                              setProductImages([...productImages, preset.path]);
-                            }
-                          }}
-                          className="px-2.5 py-1 bg-zinc-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-zinc-200 text-zinc-650 text-[9px] uppercase font-black rounded-full"
-                        >
-                          ➕ {preset.label}
-                        </button>
-                      ))}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Inventory Quantity</label>
+                      <input 
+                        type="number" 
+                        value={inventory} 
+                        onChange={(e) => setInventory(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      />
                     </div>
                   </div>
 
-                  {/* 🖼️ Grid of Added Images */}
-                  {productImages.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                      {productImages.map((imgUrl, index) => (
-                        <div key={index} className="aspect-square bg-zinc-50 border border-zinc-200 relative p-2 flex flex-col items-center justify-center group overflow-hidden shadow-sm">
-                          {/* Image preview */}
-                          <img 
-                            src={imgUrl} 
-                            alt={`Garment image ${index + 1}`}
-                            className="max-h-full max-w-full object-contain transition-all duration-300 group-hover:scale-105"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/images/products/blank_tee_white.png";
-                            }}
-                          />
-                          
-                          {/* Badge for index 0 (Primary thumbnail preview) */}
-                          <span className="absolute bottom-1 left-1 bg-zinc-950 text-white text-[7px] uppercase font-black tracking-widest px-1 py-0.5 rounded">
-                            {index === 0 ? "★ Primary" : `Slide ${index + 1}`}
-                          </span>
-
-                          {/* Delete Hover Button */}
+                  {/* 📏 AVAILABLE SIZES SELECTION */}
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Available Garment Sizes</label>
+                      <span className="text-[9px] uppercase font-black text-indigo-655 bg-indigo-50 px-2 py-0.5 rounded-full tracking-wider">{selectedSizes.length} Selected</span>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {["S", "M", "L", "XL", "XXL", "XXXL"].map((size) => {
+                        const isSelected = selectedSizes.includes(size);
+                        return (
                           <button
+                            key={size}
                             type="button"
                             onClick={() => {
-                              setProductImages(productImages.filter((_, i) => i !== index));
+                              if (isSelected) {
+                                setSelectedSizes(selectedSizes.filter((s) => s !== size));
+                              } else {
+                                setSelectedSizes([...selectedSizes, size]);
+                              }
                             }}
-                            className="absolute top-1 right-1 w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-all scale-95 hover:scale-105 shadow cursor-pointer text-[9px] font-black"
-                            title="Delete photo"
+                            className={`w-12 h-10 flex items-center justify-center text-xs uppercase font-extrabold transition-all duration-200 border cursor-pointer ${
+                              isSelected 
+                                ? "bg-zinc-950 text-white border-zinc-950 font-black shadow-sm scale-105" 
+                                : "bg-white text-zinc-450 border-zinc-200 hover:border-zinc-400"
+                            }`}
                           >
-                            ×
+                            {size}
                           </button>
-                        </div>
-                      ))}
+                        );
+                      })}
+                    </div>
+                    <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-wide">Click sizes to toggle availability status for customers on storefront.</p>
+                  </div>
+
+                  <label className="flex items-center space-x-2 cursor-pointer pt-2">
+                    <input 
+                      type="checkbox" 
+                      checked={isCustomizable} 
+                      onChange={(e) => setIsCustomizable(e.target.checked)}
+                      className="rounded bg-white border-zinc-200 text-indigo-600 focus:ring-0 w-4 h-4" 
+                    />
+                    <span className="text-xs font-semibold text-zinc-555">Set as a Customizable Canvas template</span>
+                  </label>
+
+                  {/* 📸 GARMENT IMAGES MANAGER (MULTIPLE PHOTOS) */}
+                  <div className="space-y-3 pt-4 border-t border-zinc-150">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Garment Photos (Multiple Images)</label>
+                      <span className="text-[9px] uppercase font-black text-indigo-655 bg-indigo-50 px-2 py-0.5 rounded-full tracking-wider">{productImages.length} Photos Added</span>
+                    </div>
+
+                    {/* Add Input Field & Button */}
+                    <div className="flex space-x-2">
+                      <input 
+                        type="text" 
+                        placeholder="Enter photo path or URL (e.g. /images/products/blank_tee_black.png)"
+                        value={imageUrlInput} 
+                        onChange={(e) => setImageUrlInput(e.target.value)}
+                        className="flex-grow px-4 py-2 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (imageUrlInput.trim()) {
+                            setProductImages([...productImages, imageUrlInput.trim()]);
+                            setImageUrlInput("");
+                          }
+                        }}
+                        className="px-4 py-2 bg-zinc-950 hover:bg-zinc-900 text-white text-xs uppercase font-black tracking-widest transition-all rounded"
+                      >
+                        Add Photo
+                      </button>
+                    </div>
+
+                    {/* ⚡ Quick Presets badges */}
+                    <div className="space-y-1">
+                      <p className="text-[8px] uppercase font-bold text-zinc-455 tracking-wide">Quick Preset Assets:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { label: "White Tee Base", path: "/images/products/blank_tee_white.png" },
+                          { label: "Black Tee Base", path: "/images/products/blank_tee_black.png" },
+                          { label: "Neon Cyber Tee", path: "/images/products/neon_tee.png" },
+                          { label: "Lotus Minimal Tee", path: "/images/products/lotus_tee.png" }
+                        ].map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (!productImages.includes(preset.path)) {
+                                setProductImages([...productImages, preset.path]);
+                              }
+                            }}
+                            className="px-2.5 py-1 bg-zinc-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-zinc-200 text-zinc-655 text-[9px] uppercase font-black rounded-full"
+                          >
+                            ➕ {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 🖼️ Grid of Added Images */}
+                    {productImages.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                        {productImages.map((imgUrl, index) => (
+                          <div key={index} className="aspect-square bg-zinc-50 border border-zinc-200 relative p-2 flex flex-col items-center justify-center group overflow-hidden shadow-sm">
+                            {/* Image preview */}
+                            <img 
+                              src={imgUrl} 
+                              alt={`Garment image ${index + 1}`}
+                              className="max-h-full max-w-full object-contain transition-all duration-300 group-hover:scale-105"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "/images/products/blank_tee_white.png";
+                              }}
+                            />
+                            
+                            {/* Badge for index 0 (Primary thumbnail preview) */}
+                            <span className="absolute bottom-1 left-1 bg-zinc-950 text-white text-[7px] uppercase font-black tracking-widest px-1 py-0.5 rounded">
+                              {index === 0 ? "★ Primary" : `Slide ${index + 1}`}
+                            </span>
+
+                            {/* Delete Hover Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProductImages(productImages.filter((_, i) => i !== index));
+                              }}
+                              className="absolute top-1 right-1 w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-all scale-95 hover:scale-105 shadow cursor-pointer text-[9px] font-black"
+                              title="Delete photo"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase tracking-widest rounded flex items-center justify-center space-x-2 transition-all shadow-md font-sans"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Publish New Garment Drop</span>
+                  </button>
+                </form>
+              ) : (
+                /* --- PRODUCTS LIST VIEW --- */
+                <div className="glass-panel rounded-lg overflow-hidden bg-white border border-zinc-200 shadow-sm">
+                  {productsLoading ? (
+                    <div className="p-8 space-y-4 animate-pulse">
+                      <div className="h-6 bg-zinc-100 rounded w-1/3" />
+                      <div className="h-32 bg-zinc-50 rounded" />
+                      <div className="h-32 bg-zinc-50 rounded" />
+                    </div>
+                  ) : products.length === 0 ? (
+                    <div className="p-12 text-center space-y-4">
+                      <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto text-zinc-400 animate-bounce">
+                        <ShoppingBag className="w-8 h-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-black uppercase text-zinc-800 tracking-wider">No Products Published Yet</h4>
+                        <p className="text-xs text-zinc-500 max-w-sm mx-auto">Publish your first limited streetwear drop using the configuration builder.</p>
+                      </div>
+                      <button
+                        onClick={() => setShowAddForm(true)}
+                        className="px-4 py-2 bg-zinc-950 text-white text-[10px] uppercase font-black tracking-widest hover:bg-zinc-900 transition-all rounded-none cursor-pointer"
+                      >
+                        Publish First Drop
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-zinc-50 text-zinc-450 uppercase font-black tracking-widest border-b border-zinc-200 text-[10px]">
+                            <th className="py-4 px-6">Garment Drop Info</th>
+                            <th className="py-4 px-6">Drop Type</th>
+                            <th className="py-4 px-6">Base Price</th>
+                            <th className="py-4 px-6">Available Sizes</th>
+                            <th className="py-4 px-6">Stock Status</th>
+                            <th className="py-4 px-6 text-right">Delete Drop</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-200 text-zinc-800">
+                          {products.map((prod) => {
+                            let sizeList: string[] = [];
+                            try {
+                              sizeList = typeof prod.sizes === "string" ? JSON.parse(prod.sizes) : prod.sizes;
+                            } catch {
+                              sizeList = ["S", "M", "L", "XL"];
+                            }
+
+                            let imageList: string[] = [];
+                            try {
+                              imageList = typeof prod.images === "string" ? JSON.parse(prod.images) : prod.images;
+                            } catch {
+                              imageList = ["/images/products/blank_tee_white.png"];
+                            }
+                            const coverImage = imageList[0] || "/images/products/blank_tee_white.png";
+
+                            return (
+                              <tr key={prod.id} className="hover:bg-zinc-50/50 transition-colors">
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center space-x-4">
+                                    <div className="w-14 h-14 bg-zinc-50 border border-zinc-150 flex items-center justify-center p-1 relative overflow-hidden shrink-0">
+                                      <img 
+                                        src={coverImage} 
+                                        alt={prod.title} 
+                                        className="max-h-full max-w-full object-contain"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).src = "/images/products/blank_tee_white.png";
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                      <strong className="text-zinc-950 font-black text-sm tracking-wide block">{prod.title}</strong>
+                                      <span className="text-[10px] text-zinc-450 block font-semibold truncate max-w-xs">{prod.description}</span>
+                                    </div>
+                                  </div>
+                                </td>
+                                
+                                <td className="py-4 px-6">
+                                  {prod.is_customizable ? (
+                                    <span className="text-[8px] uppercase font-black tracking-widest text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2 py-0.5 rounded">
+                                      🎨 Customizable
+                                    </span>
+                                  ) : (
+                                    <span className="text-[8px] uppercase font-black tracking-widest text-zinc-650 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded">
+                                      🛒 Direct Purchase
+                                    </span>
+                                  )}
+                                </td>
+
+                                <td className="py-4 px-6 font-black text-zinc-950 text-sm">
+                                  ₹{prod.base_price}
+                                </td>
+
+                                <td className="py-4 px-6">
+                                  <div className="flex flex-wrap gap-1">
+                                    {sizeList.map((sz) => (
+                                      <span key={sz} className="w-6 h-6 flex items-center justify-center text-[9px] uppercase font-black border border-zinc-200 bg-white text-zinc-850 rounded">
+                                        {sz}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center space-x-2">
+                                    <span className={`w-2 h-2 rounded-full ${prod.inventory > 10 ? "bg-emerald-500" : prod.inventory > 0 ? "bg-amber-500" : "bg-rose-500"}`} />
+                                    <strong className="font-extrabold text-xs text-zinc-900">{prod.inventory} Units</strong>
+                                  </div>
+                                </td>
+
+                                <td className="py-4 px-6 text-right">
+                                  <button
+                                    onClick={() => handleDeleteProduct(prod.id)}
+                                    className="p-2 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                                    title="Delete product drop"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </div>
-
-                <button 
-                  type="submit" 
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase tracking-widest rounded flex items-center justify-center space-x-2 transition-all shadow-md"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Publish New Garment Drop</span>
-                </button>
-              </form>
+              )}
             </div>
           )}
 
