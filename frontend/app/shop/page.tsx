@@ -6,14 +6,14 @@ import ProductCard, { ProductProps } from "@/components/ProductCard";
 import { Filter, SlidersHorizontal, Search, X, Sparkles, ArrowLeftRight, ShoppingBag, ShieldAlert, Heart } from "lucide-react";
 import { API_BASE } from "@/config";
 import { useCartStore } from "@/store/cartStore";
-
 interface LookbookItem {
   id: string;
   preview_image_url: string;
   shirt_color: string;
-  view: string;
+  view?: string;
   created_at?: string;
   canvas_json?: string;
+  title?: string;
 }
 
 const FILTER_COLORS = [
@@ -26,6 +26,18 @@ const FILTER_COLORS = [
   { name: "Sage Green", hex: "#607267" },
   { name: "Sand Beige", hex: "#d6d3d1" },
 ];
+
+const getShirtHex = (colorName: string) => {
+  if (!colorName) return "#0a0a0c";
+  const norm = colorName.toLowerCase();
+  if (norm.includes("black")) return "#0a0a0c";
+  if (norm.includes("white")) return "#f4f4f7";
+  if (norm.includes("grey") || norm.includes("gray")) return "#9e9e9e";
+  if (norm.includes("red") || norm.includes("crimson")) return "#7a1c27";
+  if (norm.includes("green") || norm.includes("sage")) return "#607267";
+  if (norm.includes("beige") || norm.includes("sand")) return "#d6d3d1";
+  return "#0a0a0c";
+};
 
 // Seed showcase fallback drops for community custom designs
 const SEED_LOOKBOOK_DROPS = [
@@ -124,7 +136,7 @@ export default function ShopPage() {
           {
             id: "1",
             title: "KD's Signature Blank Heavy Tee",
-            description: "Premium 240GSM organic cotton boxy blank. Specially tailored with dropshoulder seams, ready for live custom graphics placement in the designer.",
+            description: "Premium 245GSM organic cotton boxy blank. Specially tailored with dropshoulder seams, ready for live custom graphics placement in the designer.",
             base_price: 699,
             category_id: "oversized-streetwear",
             sizes: '["S","M","L","XL"]',
@@ -189,7 +201,7 @@ export default function ShopPage() {
           {
             id: "6",
             title: "Alabaster Minimal Signature Tee",
-            description: "Our signature Off White 240GSM cotton blank adorned with subtle KD's Wear brand labels embroidered neatly near the lower hem.",
+            description: "Our signature Off White 245GSM cotton blank adorned with subtle KD's Wear brand labels embroidered neatly near the lower hem.",
             base_price: 799,
             category_id: "minimalist-collection",
             sizes: '["S","M","L","XL"]',
@@ -642,89 +654,106 @@ export default function ShopPage() {
                     const isLiked = wishlist.includes(item.id);
 
                     return (
-                      <div key={item.id} className="group border border-zinc-200 bg-white flex flex-col transition-all hover:border-[#7a1c27] hover:shadow-lg">
-                        
-                        {/* Hover-aware Image Box Container */}
-                        <div 
-                          className="aspect-[5/6] w-full relative flex items-center justify-center transition-colors duration-500 overflow-hidden"
-                          style={{ backgroundColor: designHex }}
-                        >
-                          <svg className="absolute inset-0 w-full h-full p-4 pointer-events-none select-none z-0" viewBox="0 0 100 100">
-                            <path d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" fill="none" stroke="#1f1f23" strokeWidth="1.6" opacity="0.8" />
-                            <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#1f1f23" strokeWidth="1.2" opacity="0.8" />
-                          </svg>
+                      <div key={item.id} className="group block">
+                        <div className="overflow-hidden flex flex-col h-full bg-white/40 border border-zinc-100 hover:border-zinc-200 transition-all p-3 rounded-none shadow-sm">
+                          
+                          {/* Card Media Preview (Structured exactly like ProductCard) */}
+                          <div className="relative aspect-[1/1] bg-[#f5f2eb] overflow-hidden flex items-center justify-center">
+                            
+                            {/* Color fill layer matching fabric shade */}
+                            <div className="absolute inset-0 transition-colors duration-500" style={{ backgroundColor: designHex }} />
+                            
+                            {/* Vintage garment outline lines overlay */}
+                            <svg className="absolute inset-0 w-full h-full p-4 pointer-events-none select-none z-0" viewBox="0 0 100 100">
+                              <path d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.3" />
+                              <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.3" />
+                            </svg>
 
-                          {isPreset && presetItem ? (
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10 p-6">
-                              <span className="text-white text-base md:text-lg font-black uppercase tracking-widest filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rotate-[-12deg]" style={{ fontFamily: "Impact" }}>
-                                {presetItem.textLabel}
+                            {isPreset && presetItem ? (
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10 p-6">
+                                <span className="text-white text-xs md:text-sm font-black uppercase tracking-widest filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rotate-[-12deg]" style={{ fontFamily: "Impact" }}>
+                                  {presetItem.textLabel}
+                                </span>
+                              </div>
+                            ) : (
+                              <img 
+                                src={item.preview_image_url} 
+                                alt={dropTitle} 
+                                className="w-[130px] h-[160px] object-contain relative z-10 select-none pointer-events-none group-hover:scale-105 transition-transform duration-500"
+                              />
+                            )}
+
+                            {/* Floating Badges */}
+                            <div className="absolute top-2.5 left-2.5 z-10 flex flex-col space-y-2">
+                              <span className="text-[8px] font-black uppercase text-[#7a1c27] bg-[#f5f2eb] border border-[#7a1c27]/20 px-2 py-0.5 tracking-widest flex items-center space-x-1 shadow-sm font-sans">
+                                <span>{isPreset ? "Preset" : "Community"}</span>
                               </span>
                             </div>
-                          ) : (
-                            <img 
-                              src={item.preview_image_url} 
-                              alt={dropTitle} 
-                              className="w-[160px] h-[200px] object-contain relative z-10 select-none pointer-events-none group-hover:scale-105 transition-transform duration-500"
-                            />
-                          )}
 
-                          {/* DYNAMIC HOVER BUTTONS PANEL (Matches ProductCard style exactly!) */}
-                          <div className="absolute inset-0 bg-[#7a1c27]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3 z-20">
-                            {/* Crimson Square Box: Add to Cart */}
-                            <button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleAddToCart(dropObject);
-                              }}
-                              className={`p-3 text-white rounded-none shadow-lg transition-all hover:scale-105 flex items-center justify-center ${isCartSuccess ? "bg-green-600" : "bg-[#7a1c27] hover:bg-[#8e2430]"}`}
-                              title="Add to Bag"
-                            >
-                              <ShoppingBag className="w-4 h-4" />
-                            </button>
+                            {/* DYNAMIC HOVER BUTTONS PANEL (Matches ProductCard style exactly!) */}
+                            <div className="absolute inset-0 bg-[#7a1c27]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3 z-20">
+                              {/* Crimson Square Box: Add to Cart */}
+                              <button 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleAddToCart(dropObject);
+                                }}
+                                className={`p-3 text-white rounded-none shadow-lg transition-all hover:scale-105 flex items-center justify-center ${isCartSuccess ? "bg-green-600" : "bg-[#7a1c27] hover:bg-[#8e2430]"}`}
+                                title="Add to Bag"
+                              >
+                                <ShoppingBag className="w-4 h-4" />
+                              </button>
 
-                            {/* White Square Box: Remix */}
-                            <button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleRemix(dropObject);
-                              }}
-                              className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
-                              title="Remix T-Shirt"
-                            >
-                              <ArrowLeftRight className="w-4 h-4" />
-                            </button>
+                              {/* White Square Box: Remix */}
+                              <button 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleRemix(dropObject);
+                                }}
+                                className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
+                                title="Remix T-Shirt"
+                              >
+                                <ArrowLeftRight className="w-4 h-4" />
+                              </button>
 
-                            {/* White Square Box: Wishlist Toggle */}
-                            <button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                toggleWishlist(item.id);
-                              }}
-                              className={`p-3 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border ${isLiked ? "bg-[#7a1c27] text-white border-[#7a1c27]" : "bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50"}`}
-                              title="Add to Wishlist"
-                            >
-                              <Heart className={`w-4 h-4 ${isLiked ? "fill-current text-white" : ""}`} />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Card Info Footer */}
-                        <div className="p-4 flex-grow flex flex-col justify-between border-t border-zinc-150">
-                          <div className="space-y-1">
-                            <div className="flex justify-between items-center">
-                              <span className="text-[8px] font-black uppercase tracking-widest text-[#7a1c27]">{citySeed}</span>
-                              <span className="text-[7px] font-mono text-zinc-400">{isPreset ? "#PRESET" : "#CUSTOM"}</span>
-                            </div>
-                            <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-800 truncate group-hover:text-[#7a1c27] transition-colors">{dropTitle}</h4>
-                            
-                            <div className="flex justify-between items-center text-[9px] uppercase tracking-wider font-bold pt-1">
-                              <span className="text-zinc-450">Fabric: <span className="text-zinc-650 font-extrabold">{item.shirt_color || "Custom Shade"}</span></span>
-                              <span className="text-[#7a1c27] font-extrabold font-mono">₹{itemPrice}</span>
+                              {/* White Square Box: Wishlist Toggle */}
+                              <button 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleWishlist(item.id);
+                                }}
+                                className={`p-3 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border ${isLiked ? "bg-[#7a1c27] text-white border-[#7a1c27]" : "bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50"}`}
+                                title="Add to Wishlist"
+                              >
+                                <Heart className={`w-4 h-4 ${isLiked ? "fill-current text-white" : ""}`} />
+                              </button>
                             </div>
                           </div>
+
+                          {/* Card Info Footer */}
+                          <div className="pt-4 pb-2 flex-1 flex flex-col justify-between">
+                            <div className="space-y-1">
+                              <h3 className="text-xs uppercase font-extrabold text-zinc-900 tracking-wider font-display truncate group-hover:text-[#7a1c27] transition-colors">
+                                {dropTitle}
+                              </h3>
+                              <p className="text-[11px] text-zinc-500 line-clamp-1 leading-relaxed">
+                                Co-designed in {citySeed} on {dropObject.colorName} fabric.
+                              </p>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-zinc-100/60 mt-3">
+                              <span className="text-xs font-black text-[#7a1c27] tracking-wider font-sans">
+                                RS. {itemPrice}.00
+                              </span>
+                              <span className="text-[10px] text-zinc-400 font-bold tracking-widest font-sans">
+                                ★ 4.9
+                              </span>
+                            </div>
+                          </div>
+
                         </div>
                       </div>
                     );
