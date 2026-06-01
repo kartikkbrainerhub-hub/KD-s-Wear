@@ -160,19 +160,13 @@ export default function Navbar() {
               href="/shop" 
               className={`hover:text-[#7a1c27] transition-colors ${pathname === "/shop" ? "text-[#7a1c27] font-black" : ""}`}
             >
-              Shop Catalog
+              Shop
             </Link>
             <Link 
               href="/customize" 
               className={`hover:text-[#7a1c27] transition-colors text-[#7a1c27] font-black border border-[#7a1c27]/20 px-3 py-1.5 rounded-none bg-[#f5f2eb] hover:bg-[#faf8f5] ${pathname === "/customize" ? "border-[#7a1c27] bg-white text-[#7a1c27]" : ""}`}
             >
               T-Shirt Designer
-            </Link>
-            <Link 
-              href="/lookbook" 
-              className={`hover:text-[#7a1c27] transition-colors ${pathname === "/lookbook" ? "text-[#7a1c27] font-black" : ""}`}
-            >
-              Lookbook
             </Link>
             <Link 
               href="/dashboard" 
