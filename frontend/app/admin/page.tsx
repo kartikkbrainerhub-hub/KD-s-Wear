@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-import { ShieldCheck, Plus, ListOrdered, Tag, BarChart3, Settings, Save, Trash2, ArrowUpRight, Printer, Download, ShoppingBag, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Plus, ListOrdered, Tag, BarChart3, Settings, Save, Trash2, ArrowUpRight, Printer, Download, ShoppingBag, ArrowLeft, Edit2 } from "lucide-react";
 import { API_BASE } from "@/config";
 
 export default function AdminPage() {
@@ -32,6 +32,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   const fetchProducts = () => {
     setProductsLoading(true);
@@ -76,6 +77,33 @@ export default function AdminPage() {
       setProducts(products.filter((p) => p.id !== productId));
       alert("Product removed successfully.");
     }
+  };
+
+  const handleStartEdit = (prod: any) => {
+    setEditingProductId(prod.id);
+    setTitle(prod.title);
+    setDescription(prod.description);
+    setPrice(String(prod.base_price));
+    setInventory(String(prod.inventory));
+    setIsCustomizable(prod.is_customizable);
+    
+    let sizeList: string[] = [];
+    try {
+      sizeList = typeof prod.sizes === "string" ? JSON.parse(prod.sizes) : prod.sizes;
+    } catch {
+      sizeList = ["S", "M", "L", "XL"];
+    }
+    setSelectedSizes(sizeList);
+
+    let imageList: string[] = [];
+    try {
+      imageList = typeof prod.images === "string" ? JSON.parse(prod.images) : prod.images;
+    } catch {
+      imageList = ["/images/products/blank_tee_white.png"];
+    }
+    setProductImages(imageList);
+    
+    setShowAddForm(true);
   };
   
   // Data State
@@ -288,9 +316,15 @@ export default function AdminPage() {
     const finalImages = productImages.length > 0 ? productImages : ["/images/products/blank_tee_white.png"];
     const images = JSON.stringify(finalImages);
 
+    const url = editingProductId
+      ? `${API_BASE}/api/admin/products/${editingProductId}`
+      : `${API_BASE}/api/admin/products`;
+    
+    const method = editingProductId ? "PUT" : "POST";
+
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products`, {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
@@ -308,38 +342,55 @@ export default function AdminPage() {
       });
 
       if (!res.ok) throw new Error();
-      alert("Success! A new garment drop has been published to the shop.");
+      
+      alert(editingProductId ? "Success! Product drop details updated successfully." : "Success! A new garment drop has been published to the shop.");
       setTitle("");
       setDescription("");
       setPrice("");
       setProductImages(["/images/products/blank_tee_white.png"]);
       setImageUrlInput("");
       setSelectedSizes(["S", "M", "L", "XL"]);
+      setEditingProductId(null);
       fetchProducts();
       setShowAddForm(false);
     } catch {
-      alert("Success! Created product template in local server cache.");
+      alert(editingProductId ? "Success! Modified product drop template in local server cache." : "Success! Created product template in local server cache.");
       setTitle("");
       setDescription("");
       setPrice("");
       setProductImages(["/images/products/blank_tee_white.png"]);
       setImageUrlInput("");
       setSelectedSizes(["S", "M", "L", "XL"]);
-      // Optimistic addition for demo purposes in local cache fallback
-      setProducts(prev => [
-        ...prev,
-        {
-          id: `local_${Date.now()}`,
+      
+      // Optimistic cache fallback logic
+      if (editingProductId) {
+        setProducts(prev => prev.map((p) => p.id === editingProductId ? {
+          ...p,
           title,
           description,
           base_price: parseFloat(price),
-          sizes: JSON.stringify(selectedSizes),
-          colors: JSON.stringify([{ name: "Carbon Black", hex: "#0a0a0c" }]),
-          images: JSON.stringify(productImages.length > 0 ? productImages : ["/images/products/blank_tee_white.png"]),
+          sizes,
+          images,
           inventory: parseInt(inventory) || 50,
           is_customizable: isCustomizable
-        }
-      ]);
+        } : p));
+      } else {
+        setProducts(prev => [
+          ...prev,
+          {
+            id: `local_${Date.now()}`,
+            title,
+            description,
+            base_price: parseFloat(price),
+            sizes,
+            colors,
+            images,
+            inventory: parseInt(inventory) || 50,
+            is_customizable: isCustomizable
+          }
+        ]);
+      }
+      setEditingProductId(null);
       setShowAddForm(false);
     }
   };
@@ -652,26 +703,25 @@ export default function AdminPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display">
-                    {showAddForm ? "Publish T-Shirt drop" : "Garment Collection Drop Catalog"}
+                    {showAddForm ? (editingProductId ? "Modify Garment Configuration" : "Publish T-Shirt drop") : "Garment Collection Drop Catalog"}
                   </h2>
                   <p className="text-[10px] text-zinc-450 uppercase font-bold tracking-wide mt-1">
-                    {showAddForm ? "Configure custom parameters, assets, and base values." : "Manage streetwear inventory, drop publications, and custom templates."}
+                    {showAddForm ? (editingProductId ? "Modify parameter values, custom image assets, and stock sizing." : "Configure custom parameters, assets, and base values.") : "Manage streetwear inventory, drop publications, and custom templates."}
                   </p>
                 </div>
 
                 <button
                   onClick={() => {
                     setShowAddForm(!showAddForm);
-                    // Reset field defaults if opening
-                    if (!showAddForm) {
-                      setTitle("");
-                      setDescription("");
-                      setPrice("");
-                      setIsCustomizable(false);
-                      setInventory("50");
-                      setProductImages(["/images/products/blank_tee_white.png"]);
-                      setSelectedSizes(["S", "M", "L", "XL"]);
-                    }
+                    // Reset field defaults
+                    setTitle("");
+                    setDescription("");
+                    setPrice("");
+                    setIsCustomizable(false);
+                    setInventory("50");
+                    setProductImages(["/images/products/blank_tee_white.png"]);
+                    setSelectedSizes(["S", "M", "L", "XL"]);
+                    setEditingProductId(null);
                   }}
                   className={`px-5 py-2.5 text-xs uppercase font-extrabold tracking-widest transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm border cursor-pointer rounded-none ${
                     showAddForm 
@@ -886,7 +936,7 @@ export default function AdminPage() {
                     className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase tracking-widest rounded flex items-center justify-center space-x-2 transition-all shadow-md font-sans"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Publish New Garment Drop</span>
+                    <span>{editingProductId ? "Save Garment Modifications" : "Publish New Garment Drop"}</span>
                   </button>
                 </form>
               ) : (
@@ -999,13 +1049,22 @@ export default function AdminPage() {
                                 </td>
 
                                 <td className="py-4 px-6 text-right">
-                                  <button
-                                    onClick={() => handleDeleteProduct(prod.id)}
-                                    className="p-2 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer inline-flex items-center justify-center"
-                                    title="Delete product drop"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
+                                  <div className="flex items-center justify-end space-x-1.5">
+                                    <button
+                                      onClick={() => handleStartEdit(prod)}
+                                      className="p-2 text-zinc-400 hover:text-indigo-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                                      title="Edit product drop details"
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteProduct(prod.id)}
+                                      className="p-2 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                                      title="Delete product drop"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             );
