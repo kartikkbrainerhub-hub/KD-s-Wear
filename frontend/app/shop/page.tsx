@@ -525,7 +525,7 @@ export default function ShopPage() {
               }}
               className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 text-center ${activeTab === "official" ? "border-[#7a1c27] text-[#7a1c27]" : "border-transparent text-zinc-400 hover:text-zinc-700"}`}
             >
-              🛍️ Official releases
+               Official releases
             </button>
             <button
               onClick={() => {
@@ -535,7 +535,7 @@ export default function ShopPage() {
               className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 text-center flex items-center justify-center space-x-2 ${activeTab === "community" ? "border-[#7a1c27] text-[#7a1c27]" : "border-transparent text-zinc-400 hover:text-zinc-700"}`}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>👥 Community creations drops</span>
+              <span>Community creations</span>
             </button>
           </div>
 
@@ -671,28 +671,27 @@ export default function ShopPage() {
                     const isLiked = wishlist.includes(item.id);
 
                     return (
-                      <div key={item.id} className="group block">
-                        <div className="overflow-hidden flex flex-col h-full bg-white/40 border border-zinc-100 hover:border-zinc-200 transition-all p-3 rounded-none shadow-sm">
+                      <div
+                        key={item.id}
+                        className="group block cursor-pointer"
+                        onClick={() => setQuickView(dropObject)}
+                      >
+                        <div className="overflow-hidden flex flex-col h-full bg-white/40 border border-zinc-100 hover:border-[#7a1c27]/30 transition-all p-3 rounded-none shadow-sm">
 
-                          {/* Card Media Preview (Matches ProductCard layout exactly) */}
+                          {/* Card Media Preview */}
                           <div className="relative aspect-[1/1] bg-[#f5f2eb] overflow-hidden flex items-center justify-center">
                             
                             {isPreset && presetItem ? (
                               <div className="w-full h-full relative flex items-center justify-center">
-                                {/* Shaded T-Shirt mockup backdrop */}
                                 <img
                                   src={presetItem.preview_image_url}
                                   alt={dropTitle}
                                   className="w-full h-full object-contain absolute inset-0 p-2 z-10 transition-transform duration-700 ease-out group-hover:scale-105"
                                 />
-                                {/* Custom text print overlay centered on chest */}
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-20 pb-5">
                                   <span 
                                     className="text-[10px] sm:text-xs font-black uppercase tracking-widest filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] rotate-[-8deg] transition-transform duration-700 ease-out group-hover:scale-105"
-                                    style={{ 
-                                      fontFamily: presetFont,
-                                      color: presetTextColor
-                                    }}
+                                    style={{ fontFamily: presetFont, color: presetTextColor }}
                                   >
                                     {presetItem.textLabel}
                                   </span>
@@ -706,53 +705,19 @@ export default function ShopPage() {
                               />
                             )}
 
-                            {/* Floating Badges */}
-                            <div className="absolute top-2.5 left-2.5 z-20 flex flex-col space-y-2">
+                            {/* Floating Badge */}
+                            <div className="absolute top-2.5 left-2.5 z-20">
                               <span className="text-[8px] font-black uppercase text-[#7a1c27] bg-[#f5f2eb] border border-[#7a1c27]/20 px-2 py-0.5 tracking-widest flex items-center space-x-1 shadow-sm font-sans">
                                 <span>{isPreset ? "Preset" : "Community"}</span>
                               </span>
                             </div>
 
-                            {/* DYNAMIC HOVER BUTTONS PANEL (Matches ProductCard style exactly!) */}
-                            <div className="absolute inset-0 bg-[#7a1c27]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3 z-20">
-                              {/* Crimson Square Box: Add to Cart */}
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleAddToCart(dropObject);
-                                }}
-                                className={`p-3 text-white rounded-none shadow-lg transition-all hover:scale-105 flex items-center justify-center ${isCartSuccess ? "bg-green-600" : "bg-[#7a1c27] hover:bg-[#8e2430]"}`}
-                                title="Add to Bag"
-                              >
-                                <ShoppingBag className="w-4 h-4" />
-                              </button>
-
-                              {/* White Square Box: Quick View */}
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setQuickView(dropObject);
-                                }}
-                                className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
-                                title="Quick View"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-
-                              {/* White Square Box: Wishlist Toggle */}
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  toggleWishlist(item.id);
-                                }}
-                                className={`p-3 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border ${isLiked ? "bg-[#7a1c27] text-white border-[#7a1c27]" : "bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50"}`}
-                                title="Add to Wishlist"
-                              >
-                                <Heart className={`w-4 h-4 ${isLiked ? "fill-current text-white" : ""}`} />
-                              </button>
+                            {/* Hover overlay — click to view */}
+                            <div className="absolute inset-0 bg-zinc-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
+                              <span className="flex items-center space-x-1.5 bg-white/90 text-zinc-900 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 shadow-md">
+                                <Eye className="w-3 h-3" />
+                                <span>View Details</span>
+                              </span>
                             </div>
                           </div>
 
@@ -766,14 +731,9 @@ export default function ShopPage() {
                                 Co-designed in {citySeed} on {dropObject.colorName} fabric.
                               </p>
                             </div>
-
                             <div className="flex items-center justify-between pt-3 border-t border-zinc-100/60 mt-3">
-                              <span className="text-xs font-black text-[#7a1c27] tracking-wider font-sans">
-                                RS. {itemPrice}.00
-                              </span>
-                              <span className="text-[10px] text-zinc-400 font-bold tracking-widest font-sans">
-                                ★ 4.9
-                              </span>
+                              <span className="text-xs font-black text-[#7a1c27] tracking-wider font-sans">RS. {itemPrice}.00</span>
+                              <span className="text-[10px] text-zinc-400 font-bold tracking-widest font-sans">★ 4.9</span>
                             </div>
                           </div>
 
@@ -842,8 +802,8 @@ export default function ShopPage() {
                 </span>
               </div>
 
-              {/* Right — Details */}
-              <div className="flex flex-col justify-between p-6 space-y-5">
+              {/* Right — Full Detail Panel */}
+              <div className="flex flex-col justify-between p-6 space-y-4">
                 <div className="space-y-3">
                   <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2 py-0.5 inline-block">
                     Community Creation
@@ -851,27 +811,50 @@ export default function ShopPage() {
                   <h2 className="text-lg font-serif font-black uppercase tracking-wide text-zinc-950 leading-tight">
                     {quickView.title}
                   </h2>
-                  <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
-                    Co-designed in {quickView.stageCity} on {quickView.colorName} fabric.
+
+                  {/* Stars */}
+                  <div className="flex items-center space-x-2">
+                    <div className="flex text-[#7a1c27]">
+                      {[...Array(5)].map((_,i) => <span key={i} className="text-xs">★</span>)}
+                    </div>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">(Community Verified)</span>
+                  </div>
+
+                  <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium leading-relaxed">
+                    Co-designed in {quickView.stageCity} on {quickView.colorName} fabric. Fully customizable — remix this drop in the studio.
                   </p>
 
-                  {/* Fabric color swatch */}
-                  <div className="flex items-center space-x-2 pt-1">
+                  {/* Fabric swatch */}
+                  <div className="flex items-center space-x-2 bg-[#f5f2eb] px-3 py-2 border border-zinc-200/60">
                     <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-400">Fabric</span>
-                    <span
-                      className="w-5 h-5 rounded-full border-2 border-white shadow-md inline-block"
-                      style={{ backgroundColor: quickView.hex }}
-                    />
-                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">{quickView.colorName}</span>
+                    <span className="w-4 h-4 rounded-full border border-white shadow-md inline-block flex-shrink-0" style={{ backgroundColor: quickView.hex }} />
+                    <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-wider">{quickView.colorName}</span>
                   </div>
                 </div>
 
-                {/* Price + CTA */}
+                {/* Price + CTAs */}
                 <div className="space-y-3 border-t border-zinc-200/60 pt-4">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-400">Price</span>
-                    <span className="text-xl font-black text-[#7a1c27] font-mono">RS. {quickView.price}.00</span>
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-400">Retail Price</span>
+                    <span className="text-2xl font-black text-[#7a1c27] font-mono">RS. {quickView.price}.00</span>
                   </div>
+
+                  {/* Customize CTA */}
+                  <button
+                    onClick={() => {
+                      setQuickView(null);
+                      const params = new URLSearchParams();
+                      if (quickView.canvas_json) params.set("canvas", encodeURIComponent(quickView.canvas_json));
+                      if (quickView.hex) params.set("color", quickView.hex);
+                      router.push(`/customize?${params.toString()}`);
+                    }}
+                    className="w-full py-3 bg-white hover:bg-zinc-50 text-zinc-900 font-extrabold text-xs uppercase tracking-widest flex items-center justify-center space-x-2 transition-all rounded-none border border-zinc-200 hover:border-[#7a1c27]"
+                  >
+                    <Palette className="w-4 h-4 text-[#7a1c27]" />
+                    <span>Customize This Design</span>
+                  </button>
+
+                  {/* Add to Bag CTA */}
                   <button
                     onClick={() => {
                       handleAddToCart(quickView);
