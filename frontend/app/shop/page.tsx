@@ -28,6 +28,54 @@ const FILTER_COLORS = [
   { name: "Sand Beige", hex: "#d6d3d1" },
 ];
 
+// Seed showcase fallback drops for community custom designs
+const SEED_LOOKBOOK_DROPS = [
+  {
+    id: "preset-shibuya-drift",
+    title: "Drop #1084: Shibuya Drift",
+    colorName: "Crimson Red",
+    hex: "#7a1c27",
+    preview_image_url: "/images/products/blank_tee_black.png",
+    textLabel: "NEON TOKYO",
+    stageCity: "Tokyo Studio",
+    price: 1800,
+    canvas_json: '{"version":"5.3.0","objects":[{"type":"i-text","version":"5.3.0","originX":"center","originY":"center","left":160,"top":200,"width":240,"height":40,"fill":"#ffffff","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeMiterLimit":4,"scaleX":1.2,"scaleY":1.2,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"fontFamily":"Impact","fontWeight":"bold","fontSize":28,"text":"NEON TOKYO","underline":false,"overline":false,"linethrough":false,"textAlign":"center","fontStyle":"normal","lineHeight":1.16,"charSpacing":0}]}'
+  },
+  {
+    id: "preset-system-override",
+    title: "Drop #3290: Cyber Override",
+    colorName: "Slate Grey",
+    hex: "#4b5563",
+    preview_image_url: "/images/products/blank_tee_white.png",
+    textLabel: "SYSTEM FAIL",
+    stageCity: "Berlin Under",
+    price: 1800,
+    canvas_json: '{"version":"5.3.0","objects":[{"type":"i-text","version":"5.3.0","originX":"center","originY":"center","left":160,"top":180,"width":250,"height":36,"fill":"#ef4444","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeMiterLimit":4,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":0.9,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"fontFamily":"Courier New","fontWeight":"bold","fontSize":32,"text":"SYSTEM FAIL","underline":false,"overline":false,"linethrough":false,"textAlign":"center","fontStyle":"normal","lineHeight":1.16,"charSpacing":0}]}'
+  },
+  {
+    id: "preset-vintage-rebel",
+    title: "Drop #7712: Vintage Rebel",
+    colorName: "Pitch Black",
+    hex: "#18181b",
+    preview_image_url: "/images/products/blank_tee_black.png",
+    textLabel: "REBEL STREETS",
+    stageCity: "New Delhi Staging",
+    price: 1800,
+    canvas_json: '{"version":"5.3.0","objects":[{"type":"i-text","version":"5.3.0","originX":"center","originY":"center","left":160,"top":210,"width":200,"height":32,"fill":"#eab308","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeMiterLimit":4,"scaleX":1.3,"scaleY":1.3,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"fontFamily":"Georgia","fontWeight":"normal","fontSize":26,"text":"REBEL STREETS","underline":false,"overline":false,"linethrough":false,"textAlign":"center","fontStyle":"italic","lineHeight":1.16,"charSpacing":0}]}'
+  },
+  {
+    id: "preset-minimalist-cyber",
+    title: "Drop #9024: Void Division",
+    colorName: "Sand Beige",
+    hex: "#d6d3d1",
+    preview_image_url: "/images/products/blank_tee_white.png",
+    textLabel: "VOID DIVISION",
+    stageCity: "London Core",
+    price: 1800,
+    canvas_json: '{"version":"5.3.0","objects":[{"type":"i-text","version":"5.3.0","originX":"center","originY":"center","left":160,"top":190,"width":260,"height":38,"fill":"#1f1f23","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeMiterLimit":4,"scaleX":1.1,"scaleY":1.1,"angle":0,"flipX":false,"flipY":false,"opacity":0.95,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"fontFamily":"Impact","fontWeight":"normal","fontSize":30,"text":"VOID DIVISION","underline":false,"overline":false,"linethrough":false,"textAlign":"center","fontStyle":"normal","lineHeight":1.16,"charSpacing":0}]}'
+  }
+];
+
 export default function ShopPage() {
   const router = useRouter();
   const { addToCart } = useCartStore();
@@ -45,7 +93,10 @@ export default function ShopPage() {
   
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
-  const [purchaseStatus, setPurchaseStatus] = useState<string | null>(null);
+
+  // Success state for inline cart actions
+  const [cartStatus, setCartStatus] = useState<string | null>(null);
+  const [wishlist, setWishlist] = useState<string[]>([]);
   
   // Filter criteria states
   const [search, setSearch] = useState("");
@@ -220,7 +271,6 @@ export default function ShopPage() {
     setProducts(filteredProds);
 
     // B. Filter Community Drops
-    // Seeds fallback items lists
     const communitySeeds = [
       {
         id: "preset-shibuya-drift",
@@ -269,7 +319,6 @@ export default function ShopPage() {
       );
     }
     
-    // Community items are standard premium at ₹899 or ₹1800 presets
     filteredFeed = filteredFeed.filter(x => {
       const itemPrice = x.id.startsWith("preset-") ? 1800 : 899;
       return itemPrice <= maxPrice;
@@ -279,8 +328,9 @@ export default function ShopPage() {
 
   }, [rawProducts, rawFeedItems, search, selectedCategory, selectedSize, selectedColor, maxPrice, sortOption]);
 
-  const handleInstantBuy = (drop: any) => {
-    setPurchaseStatus(drop.id);
+  // Inline Cart Addition Handler
+  const handleAddToCart = (drop: any) => {
+    setCartStatus(drop.id);
     const dropHex = drop.hex || "#0a0a0c";
     addToCart({
       product_id: "custom-tshirt-canvas",
@@ -295,9 +345,8 @@ export default function ShopPage() {
     });
 
     setTimeout(() => {
-      setPurchaseStatus(null);
-      router.push("/checkout");
-    }, 800);
+      setCartStatus(null);
+    }, 1000);
   };
 
   const handleRemix = (drop: any) => {
@@ -305,6 +354,14 @@ export default function ShopPage() {
       router.push(`/customize?seed_text=${encodeURIComponent(drop.textLabel)}&seed_color=${encodeURIComponent(drop.hex)}&seed_family=Impact`);
     } else {
       router.push(`/customize?design_id=${drop.id}`);
+    }
+  };
+
+  const toggleWishlist = (id: string) => {
+    if (wishlist.includes(id)) {
+      setWishlist(wishlist.filter(x => x !== id));
+    } else {
+      setWishlist([...wishlist, id]);
     }
   };
 
@@ -456,7 +513,7 @@ export default function ShopPage() {
             <button
               onClick={() => {
                 setActiveTab("official");
-                setSelectedCategory(null); // reset category filter
+                setSelectedCategory(null);
               }}
               className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 text-center ${activeTab === "official" ? "border-[#7a1c27] text-[#7a1c27]" : "border-transparent text-zinc-400 hover:text-zinc-700"}`}
             >
@@ -590,6 +647,8 @@ export default function ShopPage() {
                       canvas_json: item.canvas_json || ""
                     };
 
+                    const isCartSuccess = cartStatus === item.id;
+
                     return (
                       <div key={item.id} className="group border border-zinc-200 bg-white flex flex-col transition-all hover:border-[#7a1c27] hover:shadow-lg">
                         <div 
@@ -630,22 +689,40 @@ export default function ShopPage() {
                             </div>
                           </div>
 
+                          {/* 3-BUTTON PREMIUM ACTION BAR */}
                           <div className="flex items-center space-x-2 pt-2 border-t border-zinc-100">
+                            {/* RED BUTTON: ADD TO CART */}
                             <button 
-                              onClick={() => handleInstantBuy(dropObject)}
-                              disabled={purchaseStatus === item.id}
-                              className="flex-1 bg-zinc-950 text-white py-2 text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-[#7a1c27] transition-all flex items-center justify-center space-x-1.5"
+                              onClick={() => handleAddToCart(dropObject)}
+                              className={`w-10 h-10 flex items-center justify-center border transition-all ${isCartSuccess ? "bg-green-600 border-green-600 text-white" : "bg-[#7a1c27] border-[#7a1c27] text-white hover:bg-[#8e2430] hover:border-[#8e2430]"}`}
+                              title="Add to Cart"
                             >
-                              <ShoppingBag className="w-3 h-3" />
-                              <span>{purchaseStatus === item.id ? "Securing..." : "Buy Ready"}</span>
+                              <ShoppingBag className="w-4 h-4" />
                             </button>
+                            
+                            {/* WHITE BUTTON 1: REMIX IN STUDIO */}
                             <button 
                               onClick={() => handleRemix(dropObject)}
-                              className="px-3 bg-zinc-100 text-zinc-700 py-2 text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-zinc-200 transition-all flex items-center justify-center space-x-1"
+                              className="flex-1 bg-white border border-zinc-200 text-zinc-700 h-10 hover:border-zinc-400 hover:text-zinc-950 transition-all flex items-center justify-center space-x-1.5 font-black uppercase tracking-widest text-[9px]"
                               title="Remix Design inside Studio"
                             >
-                              <ArrowLeftRight className="w-3 h-3" />
+                              <ArrowLeftRight className="w-3.5 h-3.5" />
                               <span>Remix</span>
+                            </button>
+
+                            {/* WHITE BUTTON 2: WISHLIST HEART */}
+                            <button 
+                              onClick={() => toggleWishlist(item.id)}
+                              className="w-10 h-10 border border-zinc-200 bg-white hover:border-zinc-400 transition-all flex items-center justify-center"
+                              title="Add to Wishlist"
+                            >
+                              <svg 
+                                className={`w-4 h-4 transition-colors ${wishlist.includes(item.id) ? "fill-[#7a1c27] stroke-[#7a1c27]" : "stroke-zinc-500 fill-none"}`} 
+                                viewBox="0 0 24 24" 
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                              </svg>
                             </button>
                           </div>
                         </div>
