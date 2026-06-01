@@ -26,6 +26,7 @@ export default function AdminPage() {
     "/images/products/blank_tee_white.png"
   ]);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(["S", "M", "L", "XL"]);
   
   // Data State
   const [stats, setStats] = useState<any>(null);
@@ -222,7 +223,10 @@ export default function AdminPage() {
     e.preventDefault();
     if (!title || !description || !price) return;
 
-    const sizes = JSON.stringify(["S", "M", "L", "XL"]);
+    // Fallback if no sizes are chosen
+    const finalSizes = selectedSizes.length > 0 ? selectedSizes : ["S", "M", "L", "XL"];
+    const sizes = JSON.stringify(finalSizes);
+    
     const colors = JSON.stringify([
       { name: "Carbon Black", hex: "#0a0a0c" },
       { name: "Off White", hex: "#f4f4f7" }
@@ -257,6 +261,7 @@ export default function AdminPage() {
       setPrice("");
       setProductImages(["/images/products/blank_tee_white.png"]);
       setImageUrlInput("");
+      setSelectedSizes(["S", "M", "L", "XL"]);
     } catch {
       alert("Success! Created product template in local server cache.");
       setTitle("");
@@ -264,6 +269,7 @@ export default function AdminPage() {
       setPrice("");
       setProductImages(["/images/products/blank_tee_white.png"]);
       setImageUrlInput("");
+      setSelectedSizes(["S", "M", "L", "XL"]);
     }
   };
 
@@ -616,6 +622,41 @@ export default function AdminPage() {
                       className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
+                </div>
+
+                {/* 📏 AVAILABLE SIZES SELECTION */}
+                <div className="space-y-2 pt-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Available Garment Sizes</label>
+                    <span className="text-[9px] uppercase font-black text-indigo-650 bg-indigo-50 px-2 py-0.5 rounded-full tracking-wider">{selectedSizes.length} Selected</span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {["S", "M", "L", "XL", "XXL", "XXXL"].map((size) => {
+                      const isSelected = selectedSizes.includes(size);
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedSizes(selectedSizes.filter((s) => s !== size));
+                            } else {
+                              setSelectedSizes([...selectedSizes, size]);
+                            }
+                          }}
+                          className={`w-12 h-10 flex items-center justify-center text-xs uppercase font-extrabold transition-all duration-200 border cursor-pointer ${
+                            isSelected 
+                              ? "bg-zinc-950 text-white border-zinc-950 font-black shadow-sm scale-105" 
+                              : "bg-white text-zinc-450 border-zinc-200 hover:border-zinc-400"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-wide">Click sizes to toggle availability status for customers on storefront.</p>
                 </div>
 
                 <label className="flex items-center space-x-2 cursor-pointer pt-2">
