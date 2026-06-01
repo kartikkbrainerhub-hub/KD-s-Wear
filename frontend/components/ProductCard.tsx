@@ -1,12 +1,13 @@
 "use client";
-
+ 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, ShoppingBag, Eye, Palette } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
-
+ 
 export interface ProductProps {
   id: string;
   title: string;
@@ -20,8 +21,9 @@ export interface ProductProps {
   ratings: number;
   is_customizable: boolean;
 }
-
+ 
 export default function ProductCard({ product }: { product: ProductProps }) {
+  const router = useRouter();
   const { addToCart } = useCartStore();
   const { user, isAuthenticated, updateUser } = useAuthStore();
   
@@ -30,7 +32,10 @@ export default function ProductCard({ product }: { product: ProductProps }) {
   const sizesList = JSON.parse(product.sizes || "[]");
   const displayImage = imagesList[0] || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500";
   const hoverImage = imagesList[1] || displayImage;
-
+ 
+  // Primary hex background code
+  const firstColorHex = colorsList[0]?.hex || "#f5f2eb";
+ 
   const [isLiked, setIsLiked] = useState(() => {
     if (!isAuthenticated || !user) return false;
     try {
@@ -40,7 +45,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
       return false;
     }
   });
-
+ 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -74,7 +79,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
       updateUser(updatedUser);
     } catch (err) {}
   };
-
+ 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -91,7 +96,7 @@ export default function ProductCard({ product }: { product: ProductProps }) {
     
     alert(`Added ${product.title} to your bag!`);
   };
-
+ 
   return (
     <Link href={product.is_customizable ? "/customize" : `/shop/${product.id}`} className="group block">
       <motion.div 
@@ -102,17 +107,26 @@ export default function ProductCard({ product }: { product: ProductProps }) {
         className="overflow-hidden flex flex-col h-full bg-white/40 border border-zinc-100 hover:border-zinc-200 transition-all p-3 rounded-none shadow-sm"
       >
         {/* Card Media Preview */}
-        <div className="relative aspect-[1/1] bg-[#f5f2eb] overflow-hidden">
+        <div 
+          className="relative aspect-[1/1] overflow-hidden flex items-center justify-center transition-colors duration-500"
+          style={{ backgroundColor: firstColorHex }}
+        >
+          {/* Vintage garment outline lines overlay */}
+          <svg className="absolute inset-0 w-full h-full p-4 pointer-events-none select-none z-0" viewBox="0 0 100 100">
+            <path d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.3" />
+            <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.3" />
+          </svg>
+ 
           {/* Images toggle on hover */}
           <img 
             src={displayImage} 
             alt={product.title} 
-            className="w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105 group-hover:opacity-0 absolute inset-0 p-2"
+            className="w-[130px] h-[160px] object-contain relative z-10 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:opacity-0"
           />
           <img 
             src={hoverImage} 
             alt={product.title} 
-            className="w-full h-full object-contain transition-transform duration-700 ease-out scale-100 group-hover:scale-105 opacity-0 group-hover:opacity-100 absolute inset-0 p-2"
+            className="w-[130px] h-[160px] object-contain absolute z-10 transition-transform duration-700 ease-out scale-100 group-hover:scale-105 opacity-0 group-hover:opacity-100"
           />
   
           {/* Floating Badges */}
@@ -123,39 +137,51 @@ export default function ProductCard({ product }: { product: ProductProps }) {
                 <span>Customize</span>
               </span>
             ) : (
-              <span className="text-[8px] font-bold uppercase text-zinc-650 bg-white border border-zinc-200 px-2 py-0.5 tracking-widest font-sans shadow-sm">
-                Pre-Made
+              <span className="text-[8px] font-black uppercase text-[#7a1c27] bg-[#f5f2eb] border border-[#7a1c27]/20 px-2 py-0.5 tracking-widest flex items-center space-x-1 shadow-sm font-sans">
+                <span>Pre-Made</span>
               </span>
             )}
           </div>
   
           {/* Quick Actions Hover panel */}
           <div className="absolute inset-0 bg-[#7a1c27]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3 z-20">
+            {/* Crimson Add to Bag Button */}
+            <button 
+              onClick={handleQuickAdd}
+              className="p-3 bg-[#7a1c27] hover:bg-[#8e2430] text-white rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center"
+              title="Add to Bag"
+            >
+              <ShoppingBag className="w-4 h-4" />
+            </button>
+ 
+            {/* White Action Link Button */}
             {product.is_customizable ? (
               <button 
-                className="p-3 bg-[#7a1c27] hover:bg-[#8e2430] text-white rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push("/customize");
+                }}
+                className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
                 title="Design Custom T-Shirt"
               >
                 <Palette className="w-4 h-4" />
               </button>
             ) : (
-              <>
-                <button 
-                  onClick={handleQuickAdd}
-                  className="p-3 bg-[#7a1c27] hover:bg-[#8e2430] text-white rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center"
-                  title="Quick Add to Bag"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                </button>
-                <button 
-                  className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
-                  title="View Details"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-              </>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/shop/${product.id}`);
+                }}
+                className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
+                title="View Details"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
             )}
   
+            {/* Wishlist Heart Button */}
             <button 
               onClick={handleWishlist}
               className={`p-3 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border ${isLiked ? "bg-[#7a1c27] text-white border-[#7a1c27]" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
