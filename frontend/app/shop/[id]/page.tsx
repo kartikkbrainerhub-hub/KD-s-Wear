@@ -2,12 +2,60 @@
  
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ShoppingBag, Star, Heart, Truck, ShieldCheck, ChevronRight, CheckCircle2 } from "lucide-react";
+import { ShoppingBag, Star, Heart, Truck, ShieldCheck, ChevronRight, CheckCircle2, Palette } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
 import { ProductProps } from "@/components/ProductCard";
 import { API_BASE } from "@/config";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Seed showcase fallback drops for community custom designs
+const SEED_LOOKBOOK_DROPS = [
+  {
+    id: "preset-shibuya-drift",
+    title: "Drop #1084: Shibuya Drift",
+    colorName: "Crimson Red",
+    hex: "#7a1c27",
+    preview_image_url: "/images/products/blank_tee_black.png",
+    textLabel: "NEON TOKYO",
+    stageCity: "Tokyo Studio",
+    price: 1800,
+    canvas_json: '{"version":"5.3.0","objects":[{"type":"i-text","version":"5.3.0","originX":"center","originY":"center","left":160,"top":200,"width":240,"height":40,"fill":"#ffffff","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeMiterLimit":4,"scaleX":1.2,"scaleY":1.2,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"fontFamily":"Impact","fontWeight":"bold","fontSize":28,"text":"NEON TOKYO","underline":false,"overline":false,"linethrough":false,"textAlign":"center","fontStyle":"normal","lineHeight":1.16,"charSpacing":0}]}'
+  },
+  {
+    id: "preset-system-override",
+    title: "Drop #3290: Cyber Override",
+    colorName: "Slate Grey",
+    hex: "#4b5563",
+    preview_image_url: "/images/products/blank_tee_white.png",
+    textLabel: "SYSTEM FAIL",
+    stageCity: "Berlin Under",
+    price: 1800,
+    canvas_json: '{"version":"5.3.0","objects":[{"type":"i-text","version":"5.3.0","originX":"center","originY":"center","left":160,"top":180,"width":250,"height":36,"fill":"#ef4444","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeMiterLimit":4,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":0.9,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"fontFamily":"Courier New","fontWeight":"bold","fontSize":32,"text":"SYSTEM FAIL","underline":false,"overline":false,"linethrough":false,"textAlign":"center","fontStyle":"normal","lineHeight":1.16,"charSpacing":0}]}'
+  },
+  {
+    id: "preset-vintage-rebel",
+    title: "Drop #7712: Vintage Rebel",
+    colorName: "Pitch Black",
+    hex: "#18181b",
+    preview_image_url: "/images/products/blank_tee_black.png",
+    textLabel: "REBEL STREETS",
+    stageCity: "New Delhi Staging",
+    price: 1800,
+    canvas_json: '{"version":"5.3.0","objects":[{"type":"i-text","version":"5.3.0","originX":"center","originY":"center","left":160,"top":210,"width":200,"height":32,"fill":"#eab308","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeMiterLimit":4,"scaleX":1.3,"scaleY":1.3,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"fontFamily":"Georgia","fontWeight":"normal","fontSize":26,"text":"REBEL STREETS","underline":false,"overline":false,"linethrough":false,"textAlign":"center","fontStyle":"italic","lineHeight":1.16,"charSpacing":0}]}'
+  },
+  {
+    id: "preset-minimalist-cyber",
+    title: "Drop #9024: Void Division",
+    colorName: "Sand Beige",
+    hex: "#d6d3d1",
+    preview_image_url: "/images/products/blank_tee_white.png",
+    textLabel: "VOID DIVISION",
+    stageCity: "London Core",
+    price: 1800,
+    canvas_json: '{"version":"5.3.0","objects":[{"type":"i-text","version":"5.3.0","originX":"center","originY":"center","left":160,"top":190,"width":260,"height":38,"fill":"#1f1f23","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeMiterLimit":4,"scaleX":1.1,"scaleY":1.1,"angle":0,"flipX":false,"flipY":false,"opacity":0.95,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"fontFamily":"Impact","fontWeight":"normal","fontSize":30,"text":"VOID DIVISION","underline":false,"overline":false,"linethrough":false,"textAlign":"center","fontStyle":"normal","lineHeight":1.16,"charSpacing":0}]}'
+  }
+];
  
 export default function ProductDetailPage() {
   const params = useParams();
@@ -19,6 +67,11 @@ export default function ProductDetailPage() {
   
   const [product, setProduct] = useState<ProductProps | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCommunity, setIsCommunity] = useState(false);
+  const [canvasJson, setCanvasJson] = useState("");
+  const [textLabel, setTextLabel] = useState("");
+  const [presetFont, setPresetFont] = useState("");
+  const [presetTextColor, setPresetTextColor] = useState("");
   
   // Selection States
   const [selectedSize, setSelectedSize] = useState("");
@@ -35,15 +88,100 @@ export default function ProductDetailPage() {
   // Fetch product from FastAPI on mount
   useEffect(() => {
     setLoading(true);
+    
+    // 1. Check if preset community design
+    if (productId.startsWith("preset-")) {
+      const preset = SEED_LOOKBOOK_DROPS.find(p => p.id === productId);
+      if (preset) {
+        let pFont = "Impact";
+        let pColor = "#ffffff";
+        if (preset.id === "preset-system-override") {
+          pFont = "Courier New";
+          pColor = "#ef4444";
+        } else if (preset.id === "preset-vintage-rebel") {
+          pFont = "Georgia";
+          pColor = "#eab308";
+        }
+
+        const mockProduct: any = {
+          id: preset.id,
+          title: preset.title,
+          description: `Co-designed in ${preset.stageCity} on ${preset.colorName} fabric. Formed of dense organic heavyweight streetwear cotton.`,
+          base_price: preset.price,
+          sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
+          colors: JSON.stringify([{ name: preset.colorName, hex: preset.hex }]),
+          images: JSON.stringify([preset.preview_image_url])
+        };
+        setProduct(mockProduct);
+        setIsCommunity(true);
+        setCanvasJson(preset.canvas_json);
+        setTextLabel(preset.textLabel);
+        setPresetFont(pFont);
+        setPresetTextColor(pColor);
+        setLoading(false);
+      } else {
+        setProduct(null);
+        setLoading(false);
+      }
+      return;
+    }
+
+    // 2. Fetch from products
     fetch(`${API_BASE}/api/products/${productId}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Product not found");
+        return res.json();
+      })
       .then((data) => {
         if (data && data.id) {
           setProduct(data);
+          setIsCommunity(false);
+          setLoading(false);
+        } else {
+          throw new Error("Product not found");
         }
       })
-      .catch((err) => console.error("Error fetching product:", err))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        // 3. Fallback to designs database API
+        fetch(`${API_BASE}/api/designs/${productId}`)
+          .then((res) => {
+            if (!res.ok) throw new Error("Design not found");
+            return res.json();
+          })
+          .then((designData) => {
+            const getShirtHex = (colorName: string) => {
+              if (!colorName) return "#0a0a0c";
+              const norm = colorName.toLowerCase();
+              if (norm.includes("black")) return "#0a0a0c";
+              if (norm.includes("white")) return "#f4f4f7";
+              if (norm.includes("grey") || norm.includes("gray")) return "#9e9e9e";
+              if (norm.includes("red") || norm.includes("crimson")) return "#7a1c27";
+              if (norm.includes("green") || norm.includes("sage")) return "#607267";
+              if (norm.includes("beige") || norm.includes("sand")) return "#d6d3d1";
+              return "#0a0a0c";
+            };
+
+            const hex = getShirtHex(designData.shirt_color);
+            const mockProduct: any = {
+              id: designData.id,
+              title: `Drop #${designData.id.slice(-4).toUpperCase()}: Street Custom`,
+              description: `Unique custom creation co-designed in drop studio. Formed of dense organic heavyweight streetwear cotton.`,
+              base_price: 1800,
+              sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
+              colors: JSON.stringify([{ name: designData.shirt_color, hex: hex }]),
+              images: JSON.stringify([designData.preview_image_url || "/images/products/blank_tee_white.png"])
+            };
+            setProduct(mockProduct);
+            setIsCommunity(true);
+            setCanvasJson(designData.canvas_json || "");
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error("Error loading item:", err);
+            setProduct(null);
+            setLoading(false);
+          });
+      });
   }, [productId]);
  
   // Populate defaults when product is loaded
@@ -92,13 +230,13 @@ export default function ProductDetailPage() {
       color: selectedColor?.hex || "#000000",
       price: product.base_price
     });
-
+ 
     // Beautiful Custom Toast notification
     setToast({
       show: true,
       message: `Successfully added ${quantity}x ${product.title} to your bag!`
     });
-
+ 
     setTimeout(() => {
       setToast(prev => ({ ...prev, show: false }));
     }, 4000);
@@ -173,13 +311,34 @@ export default function ProductDetailPage() {
           {/* Images Presentation Grid */}
           <div className="space-y-4">
             <div className="w-full aspect-[4/5] bg-[#f5f2eb] border border-zinc-200/80 flex items-center justify-center p-8 relative">
-              <img 
-                src={activeImage} 
-                alt={product.title} 
-                className="w-full h-full object-contain" 
-              />
+              {isCommunity && productId.startsWith("preset-") ? (
+                <div className="w-full h-full relative flex items-center justify-center">
+                  <img 
+                    src={activeImage} 
+                    alt={product.title} 
+                    className="w-full h-full object-contain absolute inset-0 p-2 z-10" 
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-20 pb-5">
+                    <span 
+                      className="text-xs sm:text-sm font-black uppercase tracking-widest filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] rotate-[-8deg]"
+                      style={{ 
+                        fontFamily: presetFont,
+                        color: presetTextColor
+                      }}
+                    >
+                      {textLabel}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <img 
+                  src={activeImage} 
+                  alt={product.title} 
+                  className="w-full h-full object-contain relative z-10" 
+                />
+              )}
               <span className="absolute top-4 left-4 text-[9px] font-black uppercase text-white bg-[#7a1c27] px-2 py-0.5 tracking-widest">
-                Premium Drop
+                {isCommunity ? "Community Drop" : "Premium Drop"}
               </span>
             </div>
             
@@ -202,7 +361,7 @@ export default function ProductDetailPage() {
             {/* Title & Tagging */}
             <div className="space-y-2">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2 py-0.5 inline-block">
-                Original KD's Knitwear
+                {isCommunity ? "User Custom Creation" : "Original KD's Knitwear"}
               </span>
               <h1 className="text-2xl md:text-3xl font-serif font-black uppercase tracking-wider text-zinc-950 leading-tight">
                 {product.title}
@@ -288,12 +447,27 @@ export default function ProductDetailPage() {
                 <span>Add to Bag</span>
               </button>
               
-              <button 
-                onClick={handleBuyNow}
-                className="flex-1 py-4 bg-[#7a1c27] hover:bg-[#8e2430] text-white font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center rounded-none shadow-md"
-              >
-                <span>Instant Buy Now</span>
-              </button>
+              {isCommunity ? (
+                <button 
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (canvasJson) params.set("canvas", encodeURIComponent(canvasJson));
+                    if (selectedColor?.hex) params.set("color", selectedColor.hex);
+                    router.push(`/customize?${params.toString()}`);
+                  }}
+                  className="flex-1 py-4 bg-[#7a1c27] hover:bg-[#8e2430] text-white font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center rounded-none shadow-md flex items-center justify-center space-x-2"
+                >
+                  <Palette className="w-4 h-4" />
+                  <span>Customize Design</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={handleBuyNow}
+                  className="flex-1 py-4 bg-[#7a1c27] hover:bg-[#8e2430] text-white font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center rounded-none shadow-md"
+                >
+                  <span>Instant Buy Now</span>
+                </button>
+              )}
             </div>
           </div>
  
