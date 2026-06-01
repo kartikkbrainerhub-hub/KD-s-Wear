@@ -712,13 +712,8 @@ export default function ShopPage() {
                               </span>
                             </div>
 
-                            {/* Hover overlay — click to view */}
-                            <div className="absolute inset-0 bg-zinc-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
-                              <span className="flex items-center space-x-1.5 bg-white/90 text-zinc-900 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 shadow-md">
-                                <Eye className="w-3 h-3" />
-                                <span>View Details</span>
-                              </span>
-                            </div>
+                            {/* Subtle hover ring — no button overlay */}
+                            <div className="absolute inset-0 ring-inset ring-0 group-hover:ring-2 group-hover:ring-[#7a1c27]/20 transition-all duration-300 pointer-events-none z-20" />
                           </div>
 
                           {/* Card Info Footer */}
@@ -750,7 +745,7 @@ export default function ShopPage() {
 
       </div>
 
-      {/* ── Quick View Modal ── */}
+      {/* ── Quick View Modal (matches official product detail page) ── */}
       <AnimatePresence>
         {quickView && (
           <motion.div
@@ -767,79 +762,111 @@ export default function ShopPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 24 }}
               transition={{ duration: 0.28, ease: "easeOut" }}
-              className="relative bg-[#faf8f5] border border-zinc-200 shadow-2xl max-w-2xl w-full grid grid-cols-1 sm:grid-cols-2 overflow-hidden rounded-none"
+              className="relative bg-[#faf8f5] border border-zinc-200 shadow-2xl w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 overflow-hidden rounded-none max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
+              {/* Close */}
               <button
                 onClick={() => setQuickView(null)}
-                className="absolute top-3 right-3 z-10 p-1.5 bg-white border border-zinc-200 hover:border-[#7a1c27] text-zinc-600 hover:text-[#7a1c27] transition-colors rounded-none"
+                className="absolute top-3 right-3 z-30 p-1.5 bg-white border border-zinc-200 hover:border-[#7a1c27] text-zinc-600 hover:text-[#7a1c27] transition-colors rounded-none"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              {/* Left — Mockup Preview */}
-              <div className="relative aspect-square bg-[#f5f2eb] flex items-center justify-center p-6">
+              {/* LEFT — Large image panel */}
+              <div className="relative bg-[#f5f2eb] flex items-center justify-center p-8 min-h-[320px]">
+                {/* Premium drop badge */}
+                <span className="absolute top-4 left-4 text-[9px] font-black uppercase text-white bg-[#7a1c27] px-2 py-0.5 tracking-widest z-10">
+                  Community Drop
+                </span>
                 <img
                   src={quickView.preview_image_url || "/images/products/blank_tee_white.png"}
                   alt={quickView.title}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain max-h-[300px]"
                 />
-                {/* Text print overlay */}
+                {/* Custom text print overlay */}
                 {quickView.textLabel && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-4">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-6">
                     <span
-                      className="text-[11px] font-black uppercase tracking-widest filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] rotate-[-8deg]"
+                      className="text-xs font-black uppercase tracking-widest filter drop-shadow-[0_1px_3px_rgba(0,0,0,0.3)] rotate-[-8deg]"
                       style={{ fontFamily: "Impact", color: "#ffffff" }}
                     >
                       {quickView.textLabel}
                     </span>
                   </div>
                 )}
-                {/* Stage badge */}
-                <span className="absolute top-3 left-3 text-[8px] font-black uppercase text-[#7a1c27] bg-[#f5f2eb] border border-[#7a1c27]/20 px-2 py-0.5 tracking-widest">
-                  {quickView.stageCity || "Community Drop"}
-                </span>
               </div>
 
-              {/* Right — Full Detail Panel */}
-              <div className="flex flex-col justify-between p-6 space-y-4">
-                <div className="space-y-3">
-                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2 py-0.5 inline-block">
+              {/* RIGHT — Detail panel (mirrors official /shop/[id] layout) */}
+              <div className="flex flex-col p-6 space-y-5">
+
+                {/* Title block */}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2 py-0.5 inline-block">
                     Community Creation
                   </span>
-                  <h2 className="text-lg font-serif font-black uppercase tracking-wide text-zinc-950 leading-tight">
+                  <h2 className="text-xl font-serif font-black uppercase tracking-wider text-zinc-950 leading-tight">
                     {quickView.title}
                   </h2>
-
-                  {/* Stars */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 pt-1">
                     <div className="flex text-[#7a1c27]">
-                      {[...Array(5)].map((_,i) => <span key={i} className="text-xs">★</span>)}
+                      {[...Array(5)].map((_,i) => <span key={i} className="text-sm">★</span>)}
                     </div>
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">(Community Verified)</span>
-                  </div>
-
-                  <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium leading-relaxed">
-                    Co-designed in {quickView.stageCity} on {quickView.colorName} fabric. Fully customizable — remix this drop in the studio.
-                  </p>
-
-                  {/* Fabric swatch */}
-                  <div className="flex items-center space-x-2 bg-[#f5f2eb] px-3 py-2 border border-zinc-200/60">
-                    <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-400">Fabric</span>
-                    <span className="w-4 h-4 rounded-full border border-white shadow-md inline-block flex-shrink-0" style={{ backgroundColor: quickView.hex }} />
-                    <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-wider">{quickView.colorName}</span>
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">(Community Verified)</span>
                   </div>
                 </div>
 
-                {/* Price + CTAs */}
-                <div className="space-y-3 border-t border-zinc-200/60 pt-4">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-400">Retail Price</span>
-                    <span className="text-2xl font-black text-[#7a1c27] font-mono">RS. {quickView.price}.00</span>
-                  </div>
+                {/* Price */}
+                <div className="border-t border-b border-zinc-200/50 py-3 flex items-baseline justify-between bg-[#f5f2eb]/40 px-4">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400">Retail price</span>
+                  <span className="text-2xl font-black text-[#7a1c27] font-mono">RS.{quickView.price}.00</span>
+                </div>
 
-                  {/* Customize CTA */}
+                {/* Spec */}
+                <div className="space-y-1">
+                  <p className="text-xs uppercase font-extrabold tracking-widest text-zinc-400">Spec Details</p>
+                  <p className="text-xs text-zinc-600 leading-relaxed font-medium uppercase tracking-wide">
+                    Co-designed in {quickView.stageCity} on {quickView.colorName} fabric. Fully customizable — open in the T-Shirt Designer to remix.
+                  </p>
+                </div>
+
+                {/* Fabric swatch */}
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-zinc-450 tracking-wider">Garment Palette</label>
+                  <div className="flex items-center space-x-2">
+                    <span
+                      className="w-7 h-7 rounded-full border-2 border-[#7a1c27] inline-block shadow-md"
+                      style={{ backgroundColor: quickView.hex }}
+                    />
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">{quickView.colorName}</span>
+                  </div>
+                </div>
+
+                {/* Size selector */}
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold text-zinc-450 tracking-wider">Select Size</label>
+                  <div className="flex items-center space-x-2">
+                    {["S", "M", "L", "XL", "XXL"].map((sz) => (
+                      <button
+                        key={sz}
+                        className="w-10 h-10 text-xs font-bold border border-zinc-200 bg-white text-zinc-500 hover:border-[#7a1c27] hover:text-[#7a1c27] transition-all rounded-none"
+                      >
+                        {sz}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Shipping notice */}
+                <div className="flex items-start space-x-3 text-xs text-zinc-500 bg-[#f5f2eb] p-3 border border-zinc-200/60">
+                  <span className="text-lg">🚚</span>
+                  <p className="uppercase font-bold tracking-wider text-[10px] text-zinc-700 leading-normal">
+                    Direct Shipping across India. Estimated delivery 4–7 business days. COD available.
+                  </p>
+                </div>
+
+                {/* CTAs */}
+                <div className="flex gap-3 pt-1">
                   <button
                     onClick={() => {
                       setQuickView(null);
@@ -848,24 +875,23 @@ export default function ShopPage() {
                       if (quickView.hex) params.set("color", quickView.hex);
                       router.push(`/customize?${params.toString()}`);
                     }}
-                    className="w-full py-3 bg-white hover:bg-zinc-50 text-zinc-900 font-extrabold text-xs uppercase tracking-widest flex items-center justify-center space-x-2 transition-all rounded-none border border-zinc-200 hover:border-[#7a1c27]"
+                    className="flex-1 py-3 bg-white hover:bg-zinc-50 text-zinc-800 font-extrabold text-xs uppercase tracking-widest border border-zinc-200 hover:border-[#7a1c27] flex items-center justify-center space-x-2 transition-all rounded-none"
                   >
                     <Palette className="w-4 h-4 text-[#7a1c27]" />
-                    <span>Customize This Design</span>
+                    <span>Customize</span>
                   </button>
-
-                  {/* Add to Bag CTA */}
                   <button
                     onClick={() => {
                       handleAddToCart(quickView);
                       setQuickView(null);
                     }}
-                    className="w-full py-3 bg-[#7a1c27] hover:bg-[#8e2430] text-white font-extrabold text-xs uppercase tracking-widest flex items-center justify-center space-x-2 transition-all rounded-none shadow-md"
+                    className="flex-1 py-3 bg-[#7a1c27] hover:bg-[#8e2430] text-white font-extrabold text-xs uppercase tracking-widest flex items-center justify-center space-x-2 transition-all rounded-none shadow-md"
                   >
                     <ShoppingBag className="w-4 h-4" />
                     <span>Add to Bag</span>
                   </button>
                 </div>
+
               </div>
             </motion.div>
           </motion.div>
