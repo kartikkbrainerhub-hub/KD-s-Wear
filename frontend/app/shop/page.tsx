@@ -1,10 +1,9 @@
 "use client";
  
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProductCard, { ProductProps } from "@/components/ProductCard";
-import { Filter, SlidersHorizontal, Search, X, Sparkles, ArrowLeftRight, ShoppingBag, ShieldAlert } from "lucide-react";
+import { Filter, SlidersHorizontal, Search, X, Sparkles, ArrowLeftRight, ShoppingBag, ShieldAlert, Heart } from "lucide-react";
 import { API_BASE } from "@/config";
 import { useCartStore } from "@/store/cartStore";
 
@@ -106,7 +105,7 @@ export default function ShopPage() {
   const [maxPrice, setMaxPrice] = useState<number>(2000);
   const [sortOption, setSortOption] = useState("newest");
  
-  // 1. Fetch raw products once or whenever query parameters dictate
+  // 1. Fetch raw products once
   useEffect(() => {
     let url = `${API_BASE}/api/products?`;
     setLoadingProducts(true);
@@ -225,9 +224,8 @@ export default function ShopPage() {
       });
   }, []);
 
-  // 3. MASTER FILTER ENGINE (Applies instantaneously across products or community items!)
+  // 3. MASTER FILTER ENGINE
   useEffect(() => {
-    // A. Filter Official Products
     let filteredProds = [...rawProducts];
 
     if (selectedCategory) {
@@ -246,7 +244,7 @@ export default function ShopPage() {
           const parsed = JSON.parse(x.sizes);
           return Array.isArray(parsed) && parsed.includes(selectedSize);
         } catch {
-          return true; // fail-graceful
+          return true;
         }
       });
     }
@@ -260,17 +258,14 @@ export default function ShopPage() {
         }
       });
     }
-    // Price slider constraint
     filteredProds = filteredProds.filter(x => x.base_price <= maxPrice);
 
-    // Sorting
     if (sortOption === "price_asc") filteredProds.sort((a,b) => a.base_price - b.base_price);
     if (sortOption === "price_desc") filteredProds.sort((a,b) => b.base_price - a.base_price);
     if (sortOption === "rating") filteredProds.sort((a,b) => b.ratings - a.ratings);
 
     setProducts(filteredProds);
 
-    // B. Filter Community Drops
     const communitySeeds = [
       {
         id: "preset-shibuya-drift",
@@ -328,7 +323,6 @@ export default function ShopPage() {
 
   }, [rawProducts, rawFeedItems, search, selectedCategory, selectedSize, selectedColor, maxPrice, sortOption]);
 
-  // Inline Cart Addition Handler
   const handleAddToCart = (drop: any) => {
     setCartStatus(drop.id);
     const dropHex = drop.hex || "#0a0a0c";
@@ -431,7 +425,7 @@ export default function ShopPage() {
               </div>
             </div>
 
-            {/* Filter 3: Category Selectors (Official Products Only) */}
+            {/* Filter 3: Category Selectors */}
             {activeTab === "official" && (
               <div className="space-y-2">
                 <label className="text-[10px] uppercase font-black text-zinc-450 tracking-wider">Collection Category</label>
@@ -464,7 +458,7 @@ export default function ShopPage() {
               </div>
             )}
 
-            {/* Filter 4: Dynamic Circular Color Swatches */}
+            {/* Filter 4: Fabric shade swatches */}
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-black text-zinc-450 tracking-wider">Fabric shade</label>
               <div className="grid grid-cols-4 gap-2.5 pt-1">
@@ -487,7 +481,7 @@ export default function ShopPage() {
               </div>
             </div>
  
-            {/* Filter 5: Size Selection Grid */}
+            {/* Filter 5: Sizes */}
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-black text-zinc-450 tracking-wider">Size Selection</label>
               <div className="flex flex-wrap gap-2">
@@ -531,13 +525,13 @@ export default function ShopPage() {
             </button>
           </div>
 
-          {/* Subheader info block depending on active tab */}
+          {/* Subheader info block */}
           <div className="bg-white border border-zinc-200/60 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <p className="text-[11px] font-bold tracking-wider text-zinc-500 uppercase">
                 {activeTab === "official" 
                   ? "Explore the official seasonal custom drops and signature templates designed by KD's Wear."
-                  : "Unique high-streetwear designs created and fully checked out by real customers. Click to Buy or Remix!"}
+                  : "Unique high-streetwear designs created and fully checked out by real customers. Hover image to buy or remix!"}
               </p>
             </div>
             
@@ -551,7 +545,6 @@ export default function ShopPage() {
           {/* ================= ACTIVE TAB: OFFICIAL RELEASES ================= */}
           {activeTab === "official" && (
             <div className="space-y-6">
-              {/* Top Bar Sort and details */}
               <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
                 <span className="text-[10px] text-zinc-400 font-extrabold uppercase tracking-widest">{products.length} Drops found</span>
                 
@@ -570,7 +563,6 @@ export default function ShopPage() {
                 </div>
               </div>
      
-              {/* Product grid list */}
               {loadingProducts ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   {[1, 2, 3].map((i) => (
@@ -600,7 +592,6 @@ export default function ShopPage() {
           {/* ================= ACTIVE TAB: COMMUNITY CUSTOM DROPS ================= */}
           {activeTab === "community" && (
             <div className="space-y-6">
-              {/* Top Bar Details */}
               <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
                 <span className="text-[10px] text-zinc-400 font-extrabold uppercase tracking-widest">{feedItems.length} Community creations found</span>
               </div>
@@ -648,9 +639,12 @@ export default function ShopPage() {
                     };
 
                     const isCartSuccess = cartStatus === item.id;
+                    const isLiked = wishlist.includes(item.id);
 
                     return (
                       <div key={item.id} className="group border border-zinc-200 bg-white flex flex-col transition-all hover:border-[#7a1c27] hover:shadow-lg">
+                        
+                        {/* Hover-aware Image Box Container */}
                         <div 
                           className="aspect-[5/6] w-full relative flex items-center justify-center transition-colors duration-500 overflow-hidden"
                           style={{ backgroundColor: designHex }}
@@ -673,57 +667,63 @@ export default function ShopPage() {
                               className="w-[160px] h-[200px] object-contain relative z-10 select-none pointer-events-none group-hover:scale-105 transition-transform duration-500"
                             />
                           )}
+
+                          {/* DYNAMIC HOVER BUTTONS PANEL (Matches ProductCard style exactly!) */}
+                          <div className="absolute inset-0 bg-[#7a1c27]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3 z-20">
+                            {/* Crimson Square Box: Add to Cart */}
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleAddToCart(dropObject);
+                              }}
+                              className={`p-3 text-white rounded-none shadow-lg transition-all hover:scale-105 flex items-center justify-center ${isCartSuccess ? "bg-green-600" : "bg-[#7a1c27] hover:bg-[#8e2430]"}`}
+                              title="Add to Bag"
+                            >
+                              <ShoppingBag className="w-4 h-4" />
+                            </button>
+
+                            {/* White Square Box: Remix */}
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleRemix(dropObject);
+                              }}
+                              className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
+                              title="Remix T-Shirt"
+                            >
+                              <ArrowLeftRight className="w-4 h-4" />
+                            </button>
+
+                            {/* White Square Box: Wishlist Toggle */}
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleWishlist(item.id);
+                              }}
+                              className={`p-3 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border ${isLiked ? "bg-[#7a1c27] text-white border-[#7a1c27]" : "bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50"}`}
+                              title="Add to Wishlist"
+                            >
+                              <Heart className={`w-4 h-4 ${isLiked ? "fill-current text-white" : ""}`} />
+                            </button>
+                          </div>
                         </div>
 
-                        <div className="p-4 flex-grow flex flex-col justify-between border-t border-zinc-150 space-y-3">
+                        {/* Card Info Footer */}
+                        <div className="p-4 flex-grow flex flex-col justify-between border-t border-zinc-150">
                           <div className="space-y-1">
                             <div className="flex justify-between items-center">
                               <span className="text-[8px] font-black uppercase tracking-widest text-[#7a1c27]">{citySeed}</span>
                               <span className="text-[7px] font-mono text-zinc-400">{isPreset ? "#PRESET" : "#CUSTOM"}</span>
                             </div>
-                            <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-800">{dropTitle}</h4>
+                            <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-800 truncate group-hover:text-[#7a1c27] transition-colors">{dropTitle}</h4>
                             
-                            <div className="flex justify-between items-center text-[9px] uppercase tracking-wider font-bold">
+                            <div className="flex justify-between items-center text-[9px] uppercase tracking-wider font-bold pt-1">
                               <span className="text-zinc-450">Fabric: <span className="text-zinc-650 font-extrabold">{item.shirt_color || "Custom Shade"}</span></span>
                               <span className="text-[#7a1c27] font-extrabold font-mono">₹{itemPrice}</span>
                             </div>
-                          </div>
-
-                          {/* 3-BUTTON PREMIUM ACTION BAR */}
-                          <div className="flex items-center space-x-2 pt-2 border-t border-zinc-100">
-                            {/* RED BUTTON: ADD TO CART */}
-                            <button 
-                              onClick={() => handleAddToCart(dropObject)}
-                              className={`w-10 h-10 flex items-center justify-center border transition-all ${isCartSuccess ? "bg-green-600 border-green-600 text-white" : "bg-[#7a1c27] border-[#7a1c27] text-white hover:bg-[#8e2430] hover:border-[#8e2430]"}`}
-                              title="Add to Cart"
-                            >
-                              <ShoppingBag className="w-4 h-4" />
-                            </button>
-                            
-                            {/* WHITE BUTTON 1: REMIX IN STUDIO */}
-                            <button 
-                              onClick={() => handleRemix(dropObject)}
-                              className="flex-1 bg-white border border-zinc-200 text-zinc-700 h-10 hover:border-zinc-400 hover:text-zinc-950 transition-all flex items-center justify-center space-x-1.5 font-black uppercase tracking-widest text-[9px]"
-                              title="Remix Design inside Studio"
-                            >
-                              <ArrowLeftRight className="w-3.5 h-3.5" />
-                              <span>Remix</span>
-                            </button>
-
-                            {/* WHITE BUTTON 2: WISHLIST HEART */}
-                            <button 
-                              onClick={() => toggleWishlist(item.id)}
-                              className="w-10 h-10 border border-zinc-200 bg-white hover:border-zinc-400 transition-all flex items-center justify-center"
-                              title="Add to Wishlist"
-                            >
-                              <svg 
-                                className={`w-4 h-4 transition-colors ${wishlist.includes(item.id) ? "fill-[#7a1c27] stroke-[#7a1c27]" : "stroke-zinc-500 fill-none"}`} 
-                                viewBox="0 0 24 24" 
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                              </svg>
-                            </button>
                           </div>
                         </div>
                       </div>
