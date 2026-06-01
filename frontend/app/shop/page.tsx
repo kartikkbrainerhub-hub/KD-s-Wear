@@ -1,5 +1,5 @@
 "use client";
- 
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductCard, { ProductProps } from "@/components/ProductCard";
@@ -93,22 +93,22 @@ export default function ShopPage() {
 
   // Tab switching state: "official" or "community"
   const [activeTab, setActiveTab] = useState<"official" | "community">("official");
-  
+
   // Base raw items state
   const [rawProducts, setRawProducts] = useState<ProductProps[]>([]);
   const [rawFeedItems, setRawFeedItems] = useState<LookbookItem[]>([]);
-  
+
   // Filtered items state displayed on screen
   const [products, setProducts] = useState<ProductProps[]>([]);
   const [feedItems, setFeedItems] = useState<LookbookItem[]>([]);
-  
+
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
 
   // Success state for inline cart actions
   const [cartStatus, setCartStatus] = useState<string | null>(null);
   const [wishlist, setWishlist] = useState<string[]>([]);
-  
+
   // Filter criteria states
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -116,7 +116,7 @@ export default function ShopPage() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [maxPrice, setMaxPrice] = useState<number>(2000);
   const [sortOption, setSortOption] = useState("newest");
- 
+
   // 1. Fetch raw products once
   useEffect(() => {
     let url = `${API_BASE}/api/products?`;
@@ -245,8 +245,8 @@ export default function ShopPage() {
     }
     if (search) {
       const q = search.toLowerCase();
-      filteredProds = filteredProds.filter(x => 
-        x.title.toLowerCase().includes(q) || 
+      filteredProds = filteredProds.filter(x =>
+        x.title.toLowerCase().includes(q) ||
         x.description.toLowerCase().includes(q)
       );
     }
@@ -272,9 +272,9 @@ export default function ShopPage() {
     }
     filteredProds = filteredProds.filter(x => x.base_price <= maxPrice);
 
-    if (sortOption === "price_asc") filteredProds.sort((a,b) => a.base_price - b.base_price);
-    if (sortOption === "price_desc") filteredProds.sort((a,b) => b.base_price - a.base_price);
-    if (sortOption === "rating") filteredProds.sort((a,b) => b.ratings - a.ratings);
+    if (sortOption === "price_asc") filteredProds.sort((a, b) => a.base_price - b.base_price);
+    if (sortOption === "price_desc") filteredProds.sort((a, b) => b.base_price - a.base_price);
+    if (sortOption === "rating") filteredProds.sort((a, b) => b.ratings - a.ratings);
 
     setProducts(filteredProds);
 
@@ -314,18 +314,18 @@ export default function ShopPage() {
 
     if (search) {
       const q = search.toLowerCase();
-      filteredFeed = filteredFeed.filter(x => 
+      filteredFeed = filteredFeed.filter(x =>
         (x.shirt_color && x.shirt_color.toLowerCase().includes(q)) ||
         (x.title && x.title.toLowerCase().includes(q))
       );
     }
 
     if (selectedColor) {
-      filteredFeed = filteredFeed.filter(x => 
+      filteredFeed = filteredFeed.filter(x =>
         x.shirt_color && x.shirt_color.toLowerCase().includes(selectedColor.toLowerCase())
       );
     }
-    
+
     filteredFeed = filteredFeed.filter(x => {
       const itemPrice = x.id.startsWith("preset-") ? 1800 : 899;
       return itemPrice <= maxPrice;
@@ -382,7 +382,7 @@ export default function ShopPage() {
   return (
     <main className="min-h-screen bg-[#faf8f5] text-zinc-950 pt-28 pb-20 font-sans">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
+
         {/* 1. FILTER SIDEBAR */}
         <div className="flex flex-col space-y-6">
           <div className="border border-zinc-200 bg-white p-6 rounded-none space-y-6">
@@ -392,7 +392,7 @@ export default function ShopPage() {
                 <span>Filters</span>
               </h3>
               {(search || selectedCategory || selectedSize || selectedColor || maxPrice < 2000) && (
-                <button 
+                <button
                   onClick={clearAllFilters}
                   className="text-[9px] font-black uppercase tracking-wider text-[#7a1c27] hover:underline"
                 >
@@ -400,14 +400,14 @@ export default function ShopPage() {
                 </button>
               )}
             </div>
- 
+
             {/* Filter 1: Search */}
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-black text-zinc-450 tracking-wider">Search Store</label>
               <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Vintage, heavy, black..." 
+                <input
+                  type="text"
+                  placeholder="Vintage, heavy, black..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full px-3.5 py-2 bg-white border border-zinc-200 rounded-none text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-[#7a1c27]"
@@ -422,7 +422,7 @@ export default function ShopPage() {
                 <span>Max Budget</span>
                 <span className="text-zinc-800 font-extrabold font-mono">₹{maxPrice}</span>
               </div>
-              <input 
+              <input
                 type="range"
                 min="500"
                 max="2000"
@@ -442,25 +442,25 @@ export default function ShopPage() {
               <div className="space-y-2">
                 <label className="text-[10px] uppercase font-black text-zinc-450 tracking-wider">Collection Category</label>
                 <div className="flex flex-col space-y-2 text-[10px] font-extrabold uppercase tracking-widest text-zinc-500">
-                  <button 
+                  <button
                     onClick={() => setSelectedCategory(null)}
                     className={`text-left hover:text-[#7a1c27] transition-colors ${!selectedCategory ? "text-[#7a1c27] font-black" : ""}`}
                   >
                     All Collections
                   </button>
-                  <button 
+                  <button
                     onClick={() => setSelectedCategory("oversized-streetwear")}
                     className={`text-left hover:text-[#7a1c27] transition-colors ${selectedCategory === "oversized-streetwear" ? "text-[#7a1c27] font-black" : ""}`}
                   >
                     Oversized Streetwear
                   </button>
-                  <button 
+                  <button
                     onClick={() => setSelectedCategory("minimalist-collection")}
                     className={`text-left hover:text-[#7a1c27] transition-colors ${selectedCategory === "minimalist-collection" ? "text-[#7a1c27] font-black" : ""}`}
                   >
                     Minimalist Collection
                   </button>
-                  <button 
+                  <button
                     onClick={() => setSelectedCategory("vintage-graphics")}
                     className={`text-left hover:text-[#7a1c27] transition-colors ${selectedCategory === "vintage-graphics" ? "text-[#7a1c27] font-black" : ""}`}
                   >
@@ -477,7 +477,7 @@ export default function ShopPage() {
                 {FILTER_COLORS.map((color) => {
                   const isSelected = selectedColor === color.name;
                   return (
-                    <button 
+                    <button
                       key={color.name}
                       onClick={() => setSelectedColor(isSelected ? null : color.name)}
                       className={`w-7 h-7 rounded-full border relative flex items-center justify-center transition-all ${isSelected ? "border-[#7a1c27] scale-110 shadow-md ring-2 ring-[#7a1c27]/20" : "border-zinc-300 hover:border-zinc-500 hover:scale-105"}`}
@@ -492,13 +492,13 @@ export default function ShopPage() {
                 })}
               </div>
             </div>
- 
+
             {/* Filter 5: Sizes */}
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-black text-zinc-450 tracking-wider">Size Selection</label>
               <div className="flex flex-wrap gap-2">
                 {["S", "M", "L", "XL"].map((sz) => (
-                  <button 
+                  <button
                     key={sz}
                     onClick={() => setSelectedSize(selectedSize === sz ? null : sz)}
                     className={`px-3 py-1.5 text-xs font-bold transition-all border rounded-none ${selectedSize === sz ? "bg-[#7a1c27] border-[#7a1c27] text-white" : "bg-white border-zinc-200 text-zinc-650 hover:border-zinc-350 hover:text-zinc-900"}`}
@@ -510,10 +510,10 @@ export default function ShopPage() {
             </div>
           </div>
         </div>
- 
+
         {/* 2. MAIN PRODUCTS & CREATIONS CONTAINER */}
         <div className="lg:col-span-3 space-y-8">
-          
+
           {/* DUAL TAB SWITCHER */}
           <div className="flex border-b border-zinc-200 bg-white">
             <button
@@ -541,12 +541,12 @@ export default function ShopPage() {
           <div className="bg-white border border-zinc-200/60 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <p className="text-[11px] font-bold tracking-wider text-zinc-500 uppercase">
-                {activeTab === "official" 
+                {activeTab === "official"
                   ? "Explore the official seasonal custom drops and signature templates designed by KD's Wear."
                   : "Unique high-streetwear designs created and fully checked out by real customers. Hover image to buy or remix!"}
               </p>
             </div>
-            
+
             {activeTab === "community" && (
               <div className="flex items-center space-x-1.5 text-[9px] font-black uppercase tracking-widest text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2.5 py-1">
                 <span>🔒 Privacy Verified</span>
@@ -559,10 +559,10 @@ export default function ShopPage() {
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
                 <span className="text-[10px] text-zinc-400 font-extrabold uppercase tracking-widest">{products.length} Drops found</span>
-                
+
                 <div className="flex items-center space-x-2">
                   <SlidersHorizontal className="w-4 h-4 text-zinc-400" />
-                  <select 
+                  <select
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
                     className="bg-white border border-zinc-200 text-[10px] font-black uppercase tracking-widest text-zinc-600 px-3 py-2 rounded-none focus:outline-none focus:border-[#7a1c27]"
@@ -574,7 +574,7 @@ export default function ShopPage() {
                   </select>
                 </div>
               </div>
-     
+
               {loadingProducts ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   {[1, 2, 3].map((i) => (
@@ -584,7 +584,7 @@ export default function ShopPage() {
               ) : products.length === 0 ? (
                 <div className="py-24 text-center text-zinc-450 space-y-4 border border-zinc-200 bg-white">
                   <p className="text-xs uppercase tracking-widest font-bold">No t-shirt drops found matching your filters.</p>
-                  <button 
+                  <button
                     onClick={clearAllFilters}
                     className="text-[10px] uppercase tracking-widest font-black text-[#7a1c27] border-b-2 border-[#7a1c27] pb-0.5"
                   >
@@ -616,7 +616,7 @@ export default function ShopPage() {
               ) : feedItems.length === 0 ? (
                 <div className="py-24 text-center text-zinc-450 space-y-4 border border-zinc-200 bg-white">
                   <p className="text-xs uppercase tracking-widest font-bold">No community custom creations fit your selected filters.</p>
-                  <button 
+                  <button
                     onClick={clearAllFilters}
                     className="text-[10px] uppercase tracking-widest font-black text-[#7a1c27] border-b-2 border-[#7a1c27] pb-0.5"
                   >
@@ -627,13 +627,13 @@ export default function ShopPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   {feedItems.map((item, index) => {
                     const dropTitle = item.id.startsWith("preset-") ? item.title : `Drop #${1400 + index}: Staged Drop`;
-                    const citySeed = item.id.startsWith("preset-") 
+                    const citySeed = item.id.startsWith("preset-")
                       ? (SEED_LOOKBOOK_DROPS.find(s => s.id === item.id)?.stageCity || "Paris Studio")
                       : ["New Delhi Staging", "Tokyo Studio", "Berlin Under", "London Core", "Paris Docks", "New York Warehouse"][index % 6];
-                    
+
                     const isPreset = item.id.startsWith("preset-");
                     const presetItem = SEED_LOOKBOOK_DROPS.find(s => s.id === item.id);
-                    
+
                     const designHex = isPreset && presetItem ? presetItem.hex : getShirtHex(item.shirt_color);
                     const itemPrice = isPreset ? 1800 : 899;
                     const textLabel = isPreset && presetItem ? presetItem.textLabel : "CUSTOM STREET TEE";
@@ -656,35 +656,39 @@ export default function ShopPage() {
                     return (
                       <div key={item.id} className="group block">
                         <div className="overflow-hidden flex flex-col h-full bg-white/40 border border-zinc-100 hover:border-zinc-200 transition-all p-3 rounded-none shadow-sm">
-                          
-                          {/* Card Media Preview (Structured exactly like ProductCard) */}
+
+                          {/* Card Media Preview (Matches ProductCard layout exactly) */}
                           <div className="relative aspect-[1/1] bg-[#f5f2eb] overflow-hidden flex items-center justify-center">
                             
-                            {/* Color fill layer matching fabric shade */}
-                            <div className="absolute inset-0 transition-colors duration-500" style={{ backgroundColor: designHex }} />
-                            
-                            {/* Vintage garment outline lines overlay */}
-                            <svg className="absolute inset-0 w-full h-full p-4 pointer-events-none select-none z-0" viewBox="0 0 100 100">
-                              <path d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.3" />
-                              <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.3" />
-                            </svg>
-
                             {isPreset && presetItem ? (
-                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10 p-6">
-                                <span className="text-white text-xs md:text-sm font-black uppercase tracking-widest filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rotate-[-12deg]" style={{ fontFamily: "Impact" }}>
-                                  {presetItem.textLabel}
-                                </span>
-                              </div>
+                              <>
+                                {/* T-Shirt SVG filled with custom fabric color on beige background */}
+                                <svg className="w-full h-full p-2 pointer-events-none select-none z-10 absolute inset-0" viewBox="0 0 100 100">
+                                  <path 
+                                    d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" 
+                                    fill={designHex} 
+                                    stroke="#ffffff" 
+                                    strokeWidth="1.6" 
+                                    className="transition-colors duration-500"
+                                  />
+                                  <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.3" />
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-20 p-6">
+                                  <span className="text-white text-xs md:text-sm font-black uppercase tracking-widest filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rotate-[-12deg]" style={{ fontFamily: "Impact" }}>
+                                    {presetItem.textLabel}
+                                  </span>
+                                </div>
+                              </>
                             ) : (
-                              <img 
-                                src={item.preview_image_url} 
-                                alt={dropTitle} 
-                                className="w-[130px] h-[160px] object-contain relative z-10 select-none pointer-events-none group-hover:scale-105 transition-transform duration-500"
+                              <img
+                                src={item.preview_image_url || "/images/products/blank_tee_white.png"}
+                                alt={dropTitle}
+                                className="w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105 absolute inset-0 p-2 z-10"
                               />
                             )}
 
                             {/* Floating Badges */}
-                            <div className="absolute top-2.5 left-2.5 z-10 flex flex-col space-y-2">
+                            <div className="absolute top-2.5 left-2.5 z-20 flex flex-col space-y-2">
                               <span className="text-[8px] font-black uppercase text-[#7a1c27] bg-[#f5f2eb] border border-[#7a1c27]/20 px-2 py-0.5 tracking-widest flex items-center space-x-1 shadow-sm font-sans">
                                 <span>{isPreset ? "Preset" : "Community"}</span>
                               </span>
@@ -693,7 +697,7 @@ export default function ShopPage() {
                             {/* DYNAMIC HOVER BUTTONS PANEL (Matches ProductCard style exactly!) */}
                             <div className="absolute inset-0 bg-[#7a1c27]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3 z-20">
                               {/* Crimson Square Box: Add to Cart */}
-                              <button 
+                              <button
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -706,7 +710,7 @@ export default function ShopPage() {
                               </button>
 
                               {/* White Square Box: Remix */}
-                              <button 
+                              <button
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -719,7 +723,7 @@ export default function ShopPage() {
                               </button>
 
                               {/* White Square Box: Wishlist Toggle */}
-                              <button 
+                              <button
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -764,7 +768,7 @@ export default function ShopPage() {
           )}
 
         </div>
- 
+
       </div>
     </main>
   );
