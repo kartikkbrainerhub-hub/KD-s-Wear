@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductCard, { ProductProps } from "@/components/ProductCard";
-import { Filter, SlidersHorizontal, Search, X, Sparkles, ArrowLeftRight, ShoppingBag, ShieldAlert, Heart } from "lucide-react";
+import { Filter, SlidersHorizontal, Search, X, Sparkles, Eye, Palette, ShoppingBag, ShieldAlert, Heart } from "lucide-react";
 import { API_BASE } from "@/config";
 import { useCartStore } from "@/store/cartStore";
+import { motion, AnimatePresence } from "framer-motion";
 interface LookbookItem {
   id: string;
   preview_image_url: string;
@@ -108,6 +109,7 @@ export default function ShopPage() {
   // Success state for inline cart actions
   const [cartStatus, setCartStatus] = useState<string | null>(null);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [quickView, setQuickView] = useState<any | null>(null);
 
   // Filter criteria states
   const [search, setSearch] = useState("");
@@ -726,17 +728,17 @@ export default function ShopPage() {
                                 <ShoppingBag className="w-4 h-4" />
                               </button>
 
-                              {/* White Square Box: Remix */}
+                              {/* White Square Box: Quick View */}
                               <button
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  handleRemix(dropObject);
+                                  setQuickView(dropObject);
                                 }}
                                 className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
-                                title="Remix T-Shirt"
+                                title="Quick View"
                               >
-                                <ArrowLeftRight className="w-4 h-4" />
+                                <Eye className="w-4 h-4" />
                               </button>
 
                               {/* White Square Box: Wishlist Toggle */}
@@ -787,6 +789,105 @@ export default function ShopPage() {
         </div>
 
       </div>
+
+      {/* ── Quick View Modal ── */}
+      <AnimatePresence>
+        {quickView && (
+          <motion.div
+            key="quickview-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm"
+            onClick={() => setQuickView(null)}
+          >
+            <motion.div
+              key="quickview-panel"
+              initial={{ opacity: 0, scale: 0.94, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 24 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+              className="relative bg-[#faf8f5] border border-zinc-200 shadow-2xl max-w-2xl w-full grid grid-cols-1 sm:grid-cols-2 overflow-hidden rounded-none"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setQuickView(null)}
+                className="absolute top-3 right-3 z-10 p-1.5 bg-white border border-zinc-200 hover:border-[#7a1c27] text-zinc-600 hover:text-[#7a1c27] transition-colors rounded-none"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Left — Mockup Preview */}
+              <div className="relative aspect-square bg-[#f5f2eb] flex items-center justify-center p-6">
+                <img
+                  src={quickView.preview_image_url || "/images/products/blank_tee_white.png"}
+                  alt={quickView.title}
+                  className="w-full h-full object-contain"
+                />
+                {/* Text print overlay */}
+                {quickView.textLabel && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-4">
+                    <span
+                      className="text-[11px] font-black uppercase tracking-widest filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] rotate-[-8deg]"
+                      style={{ fontFamily: "Impact", color: "#ffffff" }}
+                    >
+                      {quickView.textLabel}
+                    </span>
+                  </div>
+                )}
+                {/* Stage badge */}
+                <span className="absolute top-3 left-3 text-[8px] font-black uppercase text-[#7a1c27] bg-[#f5f2eb] border border-[#7a1c27]/20 px-2 py-0.5 tracking-widest">
+                  {quickView.stageCity || "Community Drop"}
+                </span>
+              </div>
+
+              {/* Right — Details */}
+              <div className="flex flex-col justify-between p-6 space-y-5">
+                <div className="space-y-3">
+                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2 py-0.5 inline-block">
+                    Community Creation
+                  </span>
+                  <h2 className="text-lg font-serif font-black uppercase tracking-wide text-zinc-950 leading-tight">
+                    {quickView.title}
+                  </h2>
+                  <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
+                    Co-designed in {quickView.stageCity} on {quickView.colorName} fabric.
+                  </p>
+
+                  {/* Fabric color swatch */}
+                  <div className="flex items-center space-x-2 pt-1">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-400">Fabric</span>
+                    <span
+                      className="w-5 h-5 rounded-full border-2 border-white shadow-md inline-block"
+                      style={{ backgroundColor: quickView.hex }}
+                    />
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">{quickView.colorName}</span>
+                  </div>
+                </div>
+
+                {/* Price + CTA */}
+                <div className="space-y-3 border-t border-zinc-200/60 pt-4">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-400">Price</span>
+                    <span className="text-xl font-black text-[#7a1c27] font-mono">RS. {quickView.price}.00</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleAddToCart(quickView);
+                      setQuickView(null);
+                    }}
+                    className="w-full py-3 bg-[#7a1c27] hover:bg-[#8e2430] text-white font-extrabold text-xs uppercase tracking-widest flex items-center justify-center space-x-2 transition-all rounded-none shadow-md"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Add to Bag</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
