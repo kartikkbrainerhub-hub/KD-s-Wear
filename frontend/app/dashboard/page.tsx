@@ -493,33 +493,6 @@ function DashboardContent() {
         {/* MAIN SELECTED TAB CONTENTS */}
         <div className="lg:col-span-3 space-y-6">
           
-          {/* DASHBOARD METRICS HEADER */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white border border-zinc-200 p-4 flex flex-col justify-between hover:border-[#7a1c27] transition-all">
-              <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Saved Projects</span>
-              <div className="flex items-baseline space-x-1.5 pt-2">
-                <span className="text-2xl font-black text-zinc-950 font-mono">{designs.length}</span>
-                <span className="text-[8px] text-[#7a1c27] font-extrabold uppercase">templates</span>
-              </div>
-            </div>
-            
-            <div className="bg-white border border-zinc-200 p-4 flex flex-col justify-between hover:border-[#7a1c27] transition-all">
-              <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Total Orders</span>
-              <div className="flex items-baseline space-x-1.5 pt-2">
-                <span className="text-2xl font-black text-zinc-950 font-mono">{orders.length}</span>
-                <span className="text-[8px] text-green-600 font-extrabold uppercase">placed</span>
-              </div>
-            </div>
-            
-            <div className="bg-white border border-zinc-200 p-4 flex flex-col justify-between hover:border-[#7a1c27] transition-all">
-              <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Shippings</span>
-              <div className="flex items-baseline space-x-1.5 pt-2">
-                <span className="text-2xl font-black text-zinc-950 font-mono">{addressList.length}</span>
-                <span className="text-[8px] text-zinc-550 font-extrabold uppercase">destinations</span>
-              </div>
-            </div>
-          </div>
-
           {/* ORDERS TAB */}
           {activeTab === "orders" && (
             <div className="space-y-6">
