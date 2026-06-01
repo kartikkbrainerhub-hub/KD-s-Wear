@@ -633,6 +633,21 @@ export default function ShopPage() {
 
                     const isPreset = item.id.startsWith("preset-");
                     const presetItem = SEED_LOOKBOOK_DROPS.find(s => s.id === item.id);
+                    
+                    let presetFont = "Impact";
+                    let presetTextColor = "#ffffff";
+                    if (presetItem) {
+                      if (presetItem.id === "preset-system-override") {
+                        presetFont = "Courier New";
+                        presetTextColor = "#ef4444";
+                      } else if (presetItem.id === "preset-vintage-rebel") {
+                        presetFont = "Georgia";
+                        presetTextColor = "#eab308";
+                      } else if (presetItem.id === "preset-minimalist-cyber") {
+                        presetFont = "Impact";
+                        presetTextColor = "#1d1d1f";
+                      }
+                    }
 
                     const designHex = isPreset && presetItem ? presetItem.hex : getShirtHex(item.shirt_color);
                     const itemPrice = isPreset ? 1800 : 899;
@@ -661,24 +676,26 @@ export default function ShopPage() {
                           <div className="relative aspect-[1/1] bg-[#f5f2eb] overflow-hidden flex items-center justify-center">
                             
                             {isPreset && presetItem ? (
-                              <>
-                                {/* T-Shirt SVG filled with custom fabric color on beige background */}
-                                <svg className="w-full h-full p-2 pointer-events-none select-none z-10 absolute inset-0" viewBox="0 0 100 100">
-                                  <path 
-                                    d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" 
-                                    fill={designHex} 
-                                    stroke="#ffffff" 
-                                    strokeWidth="1.6" 
-                                    className="transition-colors duration-500"
-                                  />
-                                  <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.3" />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-20 p-6">
-                                  <span className="text-white text-xs md:text-sm font-black uppercase tracking-widest filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rotate-[-12deg]" style={{ fontFamily: "Impact" }}>
+                              <div className="w-full h-full relative flex items-center justify-center">
+                                {/* Shaded T-Shirt mockup backdrop */}
+                                <img
+                                  src={presetItem.preview_image_url}
+                                  alt={dropTitle}
+                                  className="w-full h-full object-contain absolute inset-0 p-2 z-10 transition-transform duration-700 ease-out group-hover:scale-105"
+                                />
+                                {/* Custom text print overlay centered on chest */}
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-20 pb-5">
+                                  <span 
+                                    className="text-[10px] sm:text-xs font-black uppercase tracking-widest filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] rotate-[-8deg] transition-transform duration-700 ease-out group-hover:scale-105"
+                                    style={{ 
+                                      fontFamily: presetFont,
+                                      color: presetTextColor
+                                    }}
+                                  >
                                     {presetItem.textLabel}
                                   </span>
                                 </div>
-                              </>
+                              </div>
                             ) : (
                               <img
                                 src={item.preview_image_url || "/images/products/blank_tee_white.png"}
