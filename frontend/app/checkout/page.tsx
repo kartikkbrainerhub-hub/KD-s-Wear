@@ -187,8 +187,7 @@ export default function CheckoutPage() {
       // 2. COD flow
       if (paymentMethod === "COD") {
         clearCart();
-        alert("Success! Your Cash on Delivery order has been successfully placed.");
-        router.push("/dashboard");
+        router.push(`/checkout/success?order_id=${orderData.id}`);
         return;
       }
  
@@ -217,8 +216,7 @@ export default function CheckoutPage() {
  
           if (verifyRes.ok) {
             clearCart();
-            alert("Payment Verified! Your order is processing.");
-            router.push("/dashboard");
+            router.push(`/checkout/success?order_id=${orderData.id}`);
           } else {
             alert("Payment verification failed! Check order details.");
           }
