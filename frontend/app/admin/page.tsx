@@ -8,7 +8,7 @@ import { API_BASE } from "@/config";
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, token, isAuthenticated } = useAuthStore();
+  const { user, token, isAuthenticated, logout } = useAuthStore();
   
   // Guard access: Redirect if not admin
   useEffect(() => {
@@ -19,9 +19,13 @@ export default function AdminPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  // Tab State
   const [activeTab, setActiveTab] = useState<"stats" | "orders" | "products" | "coupons">("stats");
   const [downloadingDesigns, setDownloadingDesigns] = useState<Record<string, boolean>>({});
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [productImages, setProductImages] = useState<string[]>([
+    "/images/products/blank_tee_white.png"
+  ]);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   
   // Data State
   const [stats, setStats] = useState<any>(null);
@@ -223,9 +227,9 @@ export default function AdminPage() {
       { name: "Carbon Black", hex: "#0a0a0c" },
       { name: "Off White", hex: "#f4f4f7" }
     ]);
-    const images = JSON.stringify([
-      "/images/products/blank_tee_white.png"
-    ]);
+    // Fallback if list is empty
+    const finalImages = productImages.length > 0 ? productImages : ["/images/products/blank_tee_white.png"];
+    const images = JSON.stringify(finalImages);
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/products`, {
@@ -251,8 +255,15 @@ export default function AdminPage() {
       setTitle("");
       setDescription("");
       setPrice("");
+      setProductImages(["/images/products/blank_tee_white.png"]);
+      setImageUrlInput("");
     } catch {
       alert("Success! Created product template in local server cache.");
+      setTitle("");
+      setDescription("");
+      setPrice("");
+      setProductImages(["/images/products/blank_tee_white.png"]);
+      setImageUrlInput("");
     }
   };
 
@@ -298,52 +309,117 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fcfcfd] text-zinc-950 pt-28 pb-20">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
-        {/* LEFT NAV PANEL */}
-        <div className="space-y-6">
-          <div className="glass-panel p-6 rounded-lg space-y-4">
-            <h3 className="font-extrabold uppercase text-xs text-indigo-600 tracking-wider flex items-center space-x-1">
-              <ShieldCheck className="w-4 h-4 text-indigo-600" />
-              <span>Admin Console</span>
-            </h3>
-
-            <div className="flex flex-col gap-2 text-xs font-semibold text-zinc-500">
-              <button 
-                onClick={() => setActiveTab("stats")}
-                className={`flex items-center space-x-2 py-2 text-left hover:text-zinc-950 transition-colors ${activeTab === "stats" ? "text-indigo-600 font-bold border-l-2 border-indigo-600 pl-2" : ""}`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span>Dashboard Metrics</span>
-              </button>
-              <button 
-                onClick={() => setActiveTab("orders")}
-                className={`flex items-center space-x-2 py-2 text-left hover:text-zinc-950 transition-colors ${activeTab === "orders" ? "text-indigo-600 font-bold border-l-2 border-indigo-600 pl-2" : ""}`}
-              >
-                <ListOrdered className="w-4 h-4" />
-                <span>Manage Orders</span>
-              </button>
-              <button 
-                onClick={() => setActiveTab("products")}
-                className={`flex items-center space-x-2 py-2 text-left hover:text-zinc-950 transition-colors ${activeTab === "products" ? "text-indigo-600 font-bold border-l-2 border-indigo-600 pl-2" : ""}`}
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Product drop</span>
-              </button>
-              <button 
-                onClick={() => setActiveTab("coupons")}
-                className={`flex items-center space-x-2 py-2 text-left hover:text-zinc-950 transition-colors ${activeTab === "coupons" ? "text-indigo-600 font-bold border-l-2 border-indigo-600 pl-2" : ""}`}
-              >
-                <Tag className="w-4 h-4" />
-                <span>Promo Coupons</span>
-              </button>
-            </div>
+    <div className="min-h-screen bg-[#fafafc] text-zinc-950 flex font-sans overflow-hidden">
+      
+      {/* 1. LEFT SIDEBAR PANEL (Full height!) */}
+      <aside className="w-64 bg-zinc-950 text-white flex flex-col border-r border-zinc-900 shrink-0">
+        {/* Brand Section */}
+        <div className="p-6 border-b border-zinc-900 flex flex-col space-y-2">
+          <div className="flex items-center space-x-2">
+            <span style={{ fontFamily: "'Cinzel', serif" }} className="text-xl font-black tracking-wider text-white uppercase">
+              KD'S <span style={{ fontFamily: "'Cinzel', serif" }} className="text-zinc-400 font-normal tracking-[0.2em] text-sm ml-1">WEAR</span>
+            </span>
+          </div>
+          <div>
+            <span className="bg-[#7a1c27] text-[8px] uppercase font-black tracking-widest px-2 py-0.5 rounded-none text-white inline-block">
+              Admin Portal
+            </span>
           </div>
         </div>
 
-        {/* RIGHT DISPLAY VIEW */}
-        <div className="lg:col-span-3">
+        {/* Navigation Sidebar */}
+        <nav className="flex-grow p-4 space-y-1.5 flex flex-col text-xs font-bold uppercase tracking-wider text-zinc-400">
+          <button 
+            onClick={() => setActiveTab("stats")}
+            className={`flex items-center space-x-3 px-4 py-3 text-left transition-all rounded-none ${activeTab === "stats" ? "bg-[#7a1c27] text-white font-black" : "hover:bg-zinc-900 hover:text-white"}`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Dashboard</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab("orders")}
+            className={`flex items-center space-x-3 px-4 py-3 text-left transition-all rounded-none ${activeTab === "orders" ? "bg-[#7a1c27] text-white font-black" : "hover:bg-zinc-900 hover:text-white"}`}
+          >
+            <ListOrdered className="w-4 h-4" />
+            <span>Manage Orders</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab("products")}
+            className={`flex items-center space-x-3 px-4 py-3 text-left transition-all rounded-none ${activeTab === "products" ? "bg-[#7a1c27] text-white font-black" : "hover:bg-zinc-900 hover:text-white"}`}
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Product</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab("coupons")}
+            className={`flex items-center space-x-3 px-4 py-3 text-left transition-all rounded-none ${activeTab === "coupons" ? "bg-[#7a1c27] text-white font-black" : "hover:bg-zinc-900 hover:text-white"}`}
+          >
+            <Tag className="w-4 h-4" />
+            <span>Promo Coupons</span>
+          </button>
+        </nav>
+
+        {/* Footer info in sidebar */}
+        <div className="p-4 border-t border-zinc-900 text-center">
+          <p className="text-[8px] text-zinc-650 uppercase tracking-widest font-black">KD'S WEAR v1.0</p>
+        </div>
+      </aside>
+
+      {/* 2. RIGHT WORKSPACE CONTAINER */}
+      <div className="flex-grow flex flex-col min-w-0 overflow-hidden">
+        
+        {/* TOP HEADER BAR (Clean & Premium!) */}
+        <header className="bg-white border-b border-zinc-200 h-16 px-8 flex items-center justify-between shrink-0">
+          <div className="flex items-center space-x-2">
+            <h2 className="text-xs uppercase font-black tracking-widest text-zinc-400 font-mono">Console /</h2>
+            <h2 className="text-xs uppercase font-black tracking-widest text-zinc-800 font-mono">
+              {activeTab === "stats" && "Dashboard Overview"}
+              {activeTab === "orders" && "Manage Orders"}
+              {activeTab === "products" && "Add Product Drop"}
+              {activeTab === "coupons" && "Promo Coupons"}
+            </h2>
+          </div>
+
+          <div className="flex items-center space-x-4 relative">
+            <span className="text-xs font-black uppercase tracking-wider text-zinc-600">
+              Welcome, <span className="text-[#7a1c27] font-black">KD's Admin</span>
+            </span>
+
+            {/* Profile Avatar Button */}
+            <button 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="w-8 h-8 rounded-full bg-zinc-950 text-white font-serif flex items-center justify-center text-xs font-black border-2 border-[#7a1c27] transition-all hover:scale-105"
+            >
+              {user?.name ? user.name[0].toUpperCase() : "A"}
+            </button>
+
+            {/* Premium Dropdown Option */}
+            {showDropdown && (
+              <div className="absolute right-0 top-10 w-48 bg-white border border-zinc-200 shadow-lg p-3 z-50 rounded-none space-y-2">
+                <div className="pb-2 border-b border-zinc-100">
+                  <p className="text-[9px] uppercase font-bold text-zinc-400">Account Role</p>
+                  <p className="text-[10px] font-black uppercase text-[#7a1c27] tracking-wider truncate">{user?.name || "KD Admin"}</p>
+                  <p className="text-[9px] text-zinc-500 lowercase truncate">{user?.email}</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    logout();
+                    router.push("/");
+                  }}
+                  className="w-full py-1.5 bg-[#7a1c27] hover:bg-[#8e2430] text-white text-[9px] uppercase font-black tracking-widest transition-all rounded-none block text-center"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* MAIN SCROLLABLE WORKSPACE CONTENT (Fully occupies remainder space!) */}
+        <main className="flex-grow p-8 overflow-y-auto bg-[#fafafc]">
           
           {/* STATS VIEW */}
           {activeTab === "stats" && (
@@ -552,6 +628,99 @@ export default function AdminPage() {
                   <span className="text-xs font-semibold text-zinc-550">Set as a Customizable Canvas template</span>
                 </label>
 
+                {/* 📸 GARMENT IMAGES MANAGER (MULTIPLE PHOTOS) */}
+                <div className="space-y-3 pt-4 border-t border-zinc-150">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Garment Photos (Multiple Images)</label>
+                    <span className="text-[9px] uppercase font-black text-indigo-650 bg-indigo-50 px-2 py-0.5 rounded-full tracking-wider">{productImages.length} Photos Added</span>
+                  </div>
+
+                  {/* Add Input Field & Button */}
+                  <div className="flex space-x-2">
+                    <input 
+                      type="text" 
+                      placeholder="Enter photo path or URL (e.g. /images/products/blank_tee_black.png)"
+                      value={imageUrlInput} 
+                      onChange={(e) => setImageUrlInput(e.target.value)}
+                      className="flex-grow px-4 py-2 bg-white border border-zinc-200 rounded text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (imageUrlInput.trim()) {
+                          setProductImages([...productImages, imageUrlInput.trim()]);
+                          setImageUrlInput("");
+                        }
+                      }}
+                      className="px-4 py-2 bg-zinc-950 hover:bg-zinc-900 text-white text-xs uppercase font-black tracking-widest transition-all rounded"
+                    >
+                      Add Photo
+                    </button>
+                  </div>
+
+                  {/* ⚡ Quick Presets badges */}
+                  <div className="space-y-1">
+                    <p className="text-[8px] uppercase font-bold text-zinc-450 tracking-wide">Quick Preset Assets:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: "White Tee Base", path: "/images/products/blank_tee_white.png" },
+                        { label: "Black Tee Base", path: "/images/products/blank_tee_black.png" },
+                        { label: "Neon Cyber Tee", path: "/images/products/neon_tee.png" },
+                        { label: "Lotus Minimal Tee", path: "/images/products/lotus_tee.png" }
+                      ].map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            if (!productImages.includes(preset.path)) {
+                              setProductImages([...productImages, preset.path]);
+                            }
+                          }}
+                          className="px-2.5 py-1 bg-zinc-100 hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-zinc-200 text-zinc-650 text-[9px] uppercase font-black rounded-full"
+                        >
+                          ➕ {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 🖼️ Grid of Added Images */}
+                  {productImages.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                      {productImages.map((imgUrl, index) => (
+                        <div key={index} className="aspect-square bg-zinc-50 border border-zinc-200 relative p-2 flex flex-col items-center justify-center group overflow-hidden shadow-sm">
+                          {/* Image preview */}
+                          <img 
+                            src={imgUrl} 
+                            alt={`Garment image ${index + 1}`}
+                            className="max-h-full max-w-full object-contain transition-all duration-300 group-hover:scale-105"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/images/products/blank_tee_white.png";
+                            }}
+                          />
+                          
+                          {/* Badge for index 0 (Primary thumbnail preview) */}
+                          <span className="absolute bottom-1 left-1 bg-zinc-950 text-white text-[7px] uppercase font-black tracking-widest px-1 py-0.5 rounded">
+                            {index === 0 ? "★ Primary" : `Slide ${index + 1}`}
+                          </span>
+
+                          {/* Delete Hover Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProductImages(productImages.filter((_, i) => i !== index));
+                            }}
+                            className="absolute top-1 right-1 w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-all scale-95 hover:scale-105 shadow cursor-pointer text-[9px] font-black"
+                            title="Delete photo"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <button 
                   type="submit" 
                   className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase tracking-widest rounded flex items-center justify-center space-x-2 transition-all shadow-md"
@@ -655,9 +824,8 @@ export default function AdminPage() {
             </div>
           )}
 
-        </div>
-
+        </main>
       </div>
-    </main>
+    </div>
   );
 }

@@ -55,6 +55,9 @@ const FALLBACK_SEARCH_CATALOG = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
   const router = useRouter();
   const { items, removeFromCart, updateQuantity, getSubtotal, getBundleDiscount } = useCartStore();
   const { user, isAuthenticated, logout } = useAuthStore();
