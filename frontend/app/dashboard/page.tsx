@@ -55,6 +55,13 @@ function DashboardContent() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Redirect admin users to the dedicated administrative dashboard
+  useEffect(() => {
+    if (mounted && isAuthenticated && user?.role === "admin") {
+      router.push("/admin");
+    }
+  }, [mounted, isAuthenticated, user, router]);
   
   const mode = searchParams.get("mode");
  
