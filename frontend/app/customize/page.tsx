@@ -67,13 +67,6 @@ const TEXT_STYLE_PRESETS = [
   { name: "Grunge", fontFamily: "Permanent Marker", fontWeight: "normal", fontSize: 26, fill: "#ff4444", fontStyle: "normal", textDecoration: "", shadow: "3px 3px 6px rgba(0,0,0,0.9)" },
 ];
 
-// Curated streetwear logos & artwork designs library
-const PRESET_GRAPHICS = [
-  { name: "Golden Lotus", url: "/images/products/lotus_tee.png" },
-  { name: "Tokyo Neon circles", url: "/images/products/neon_tee.png" },
-  { name: "Midnight Heavy Crest", url: "/images/products/blank_tee_black.png" },
-  { name: "Studio Signature Tag", url: "/images/products/blank_tee_white.png" }
-];
 
 function CustomizePageContent() {
   const router = useRouter();
@@ -367,30 +360,6 @@ function CustomizePageContent() {
         updateLayersList(fabricCanvas);
       }
     }
-  };
-
-  // Load custom premium preset graphics onto fabric canvas
-  const addPresetGraphic = (url: string) => {
-    if (!fabricCanvas) return;
-    
-    import("fabric").then((fabricModule) => {
-      const FabricImageClass = fabricModule.FabricImage;
-      
-      FabricImageClass.fromURL(url).then((img: any) => {
-        img.scaleToWidth(140);
-        img.set({
-          left: 90,
-          top: 130,
-          cornerColor: "#7a1c27",
-          cornerSize: 8,
-          transparentCorners: false
-        });
-        
-        fabricCanvas.add(img);
-        fabricCanvas.setActiveObject(img);
-        fabricCanvas.renderAll();
-      });
-    });
   };
 
   // Add editable text layer
@@ -962,34 +931,11 @@ function CustomizePageContent() {
             )}
 
             {activeTab === "upload" && (
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider block">Premium Street Assets</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {PRESET_GRAPHICS.map((g) => (
-                      <button
-                        key={g.name}
-                        type="button"
-                        onClick={() => addPresetGraphic(g.url)}
-                        className="p-2 border border-zinc-150 hover:border-[#7a1c27] rounded-none bg-white transition-all text-left flex flex-col items-center justify-center space-y-1.5 group"
-                      >
-                        <img src={g.url} alt={g.name} className="w-12 h-12 object-contain group-hover:scale-105 transition-transform" />
-                        <span className="text-[8px] uppercase font-extrabold text-zinc-500 tracking-wider text-center block w-full truncate">{g.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="relative flex py-1 items-center">
-                  <div className="flex-grow border-t border-zinc-100/80"></div>
-                  <span className="flex-shrink mx-2 text-[8px] uppercase font-extrabold text-zinc-400 tracking-wider">or upload custom</span>
-                  <div className="flex-grow border-t border-zinc-100/80"></div>
-                </div>
-
-                <label className="w-full py-4 bg-zinc-50 border border-dashed border-zinc-200 hover:border-[#7a1c27]/40 rounded-none flex flex-col items-center justify-center cursor-pointer transition-all space-y-1.5">
-                  <Upload className="w-6 h-6 text-zinc-400" />
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#7a1c27]">Upload Custom Image</span>
-                  <span className="text-[9px] text-zinc-400">PNG, JPG, SVG supported</span>
+              <div className="space-y-4">
+                <label className="w-full py-8 bg-zinc-50 border border-dashed border-zinc-200 hover:border-[#7a1c27]/40 rounded-none flex flex-col items-center justify-center cursor-pointer transition-all space-y-2">
+                  <Upload className="w-7 h-7 text-zinc-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#7a1c27]">Upload Custom Image</span>
+                  <span className="text-[9px] text-zinc-450 uppercase font-bold">PNG, JPG, SVG supported</span>
                   <input 
                     type="file" 
                     accept="image/*" 
