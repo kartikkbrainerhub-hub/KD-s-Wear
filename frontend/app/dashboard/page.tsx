@@ -3,7 +3,8 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore, UserProfile } from "@/store/authStore";
-import { Mail, Lock, User, Phone, ClipboardList, Settings, MapPin, Palette, LogOut, CheckCircle2, Eye, EyeOff, Trash2, Plus, X, AlertTriangle } from "lucide-react";
+import { useCartStore } from "@/store/cartStore";
+import { Mail, Lock, User, Phone, ClipboardList, Settings, MapPin, Palette, LogOut, CheckCircle2, Eye, EyeOff, Trash2, Plus, X, AlertTriangle, ShoppingBag, ArrowLeftRight } from "lucide-react";
 import { API_BASE } from "@/config";
  
 const SHIRT_COLORS = [
@@ -34,13 +35,14 @@ const getShirtHex = (name: string) => {
   const match = SHIRT_COLORS.find(c => c.name.toLowerCase() === name.toLowerCase());
   return match ? match.hex : "#f4f4f7";
 };
-
+ 
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
   
   const { user, token, isAuthenticated, login, logout, updateUser } = useAuthStore();
+  const { addToCart } = useCartStore();
   
   // Tab switcher
   const [activeTab, setActiveTab] = useState<"orders" | "designs" | "profile">("orders");
@@ -71,6 +73,7 @@ function DashboardContent() {
   const [phone, setPhone] = useState("");
   const [authError, setAuthError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cartStatus, setCartStatus] = useState<string | null>(null);
  
   // Dashboard Data State
   const [orders, setOrders] = useState<any[]>([]);
@@ -248,7 +251,7 @@ function DashboardContent() {
       alert("Failed to delete shipping destination.");
     }
   };
-
+ 
   const executeDeleteDesign = async (designId: string) => {
     try {
       const res = await fetch(`${API_BASE}/api/designs/${designId}`, {
@@ -265,9 +268,28 @@ function DashboardContent() {
       alert("Failed to delete this saved custom template.");
     }
   };
-
+ 
   const handleDeleteSavedDesign = (designId: string) => {
     setDeleteTargetId(designId);
+  };
+
+  const handleAddToCart = (ds: any) => {
+    setCartStatus(ds.id);
+    addToCart({
+      product_id: "custom-tshirt-canvas",
+      title: ds.title || `Custom Canvas Tee`,
+      image: ds.preview_image_url,
+      custom_design_id: ds.id,
+      canvas_preview: ds.preview_image_url,
+      quantity: 1,
+      size: "M",
+      color: getShirtHex(ds.shirt_color),
+      price: ds.price || 899.00
+    });
+    
+    setTimeout(() => {
+      setCartStatus(null);
+    }, 1000);
   };
  
   // --- PREVENT HYDRATION MISMATCH ---
@@ -281,7 +303,7 @@ function DashboardContent() {
       </main>
     );
   }
-
+ 
   // --- RENDERING AUTHENTICATION FORM IF NOT LOGGED IN ---
   if (!isAuthenticated) {
     return (
@@ -320,7 +342,7 @@ function DashboardContent() {
                       <User className="w-4 h-4 text-zinc-400 absolute right-3 top-3" />
                     </div>
                   </div>
- 
+  
                   <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-zinc-450 tracking-wider">Phone</label>
                     <div className="relative">
@@ -420,17 +442,22 @@ function DashboardContent() {
         
         {/* SIDE BAR NAVIGATION SELECTORS */}
         <div className="space-y-6">
-          <div className="glass-panel p-6 border border-zinc-200 bg-white space-y-4">
-            <div className="space-y-1">
-              <h3 className="font-extrabold uppercase text-base text-zinc-900 truncate font-serif">{user?.name}</h3>
-              <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">{user?.email}</p>
+          <div className="border border-zinc-200 bg-white p-6 space-y-5">
+            <div className="flex items-center space-x-3.5">
+              <div className="w-11 h-11 bg-zinc-950 text-white font-serif flex items-center justify-center text-lg font-black border border-zinc-950">
+                {user?.name ? user.name[0].toUpperCase() : "U"}
+              </div>
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <h3 className="font-extrabold uppercase text-xs text-zinc-900 truncate font-serif">{user?.name}</h3>
+                <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-extrabold truncate">{user?.email}</p>
+              </div>
             </div>
             
-            <span className="inline-block text-[9px] font-black uppercase text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2.5 py-0.5 tracking-wider">
-              {user?.role === "admin" ? "Guild Executive" : "Streetwear Designer"}
-            </span>
+            <div className="inline-block text-[8px] font-black uppercase text-[#7a1c27] bg-[#7a1c27]/5 border border-[#7a1c27]/10 px-2.5 py-0.5 tracking-wider">
+              {user?.role === "admin" ? "🔑 Guild Executive" : "🎨 Streetwear Designer"}
+            </div>
  
-            <div className="border-t border-zinc-100 pt-4 flex flex-col gap-2 text-[10px] uppercase font-bold tracking-widest text-zinc-500">
+            <div className="border-t border-zinc-100 pt-4 flex flex-col gap-2.5 text-[10px] uppercase font-bold tracking-widest text-zinc-400">
               <button 
                 onClick={() => setActiveTab("orders")}
                 className={`flex items-center space-x-2 py-2 text-left hover:text-[#7a1c27] transition-colors ${activeTab === "orders" ? "text-[#7a1c27] font-black border-l-2 border-[#7a1c27] pl-2" : ""}`}
@@ -464,26 +491,65 @@ function DashboardContent() {
         </div>
  
         {/* MAIN SELECTED TAB CONTENTS */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 space-y-6">
           
+          {/* DASHBOARD METRICS HEADER */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white border border-zinc-200 p-4 flex flex-col justify-between hover:border-[#7a1c27] transition-all">
+              <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Saved Projects</span>
+              <div className="flex items-baseline space-x-1.5 pt-2">
+                <span className="text-2xl font-black text-zinc-950 font-mono">{designs.length}</span>
+                <span className="text-[8px] text-[#7a1c27] font-extrabold uppercase">templates</span>
+              </div>
+            </div>
+            
+            <div className="bg-white border border-zinc-200 p-4 flex flex-col justify-between hover:border-[#7a1c27] transition-all">
+              <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Total Orders</span>
+              <div className="flex items-baseline space-x-1.5 pt-2">
+                <span className="text-2xl font-black text-zinc-950 font-mono">{orders.length}</span>
+                <span className="text-[8px] text-green-600 font-extrabold uppercase">placed</span>
+              </div>
+            </div>
+            
+            <div className="bg-white border border-zinc-200 p-4 flex flex-col justify-between hover:border-[#7a1c27] transition-all">
+              <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Shippings</span>
+              <div className="flex items-baseline space-x-1.5 pt-2">
+                <span className="text-2xl font-black text-zinc-950 font-mono">{addressList.length}</span>
+                <span className="text-[8px] text-zinc-550 font-extrabold uppercase">destinations</span>
+              </div>
+            </div>
+          </div>
+
           {/* ORDERS TAB */}
           {activeTab === "orders" && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display font-serif">Your Order History</h2>
+              <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display font-serif border-b border-zinc-200 pb-3">Your Order History</h2>
               
               {ordersLoading ? (
                 <div className="h-40 bg-zinc-100 animate-pulse" />
               ) : orders.length === 0 ? (
-                <div className="glass-panel p-8 text-center text-zinc-400 text-xs uppercase tracking-widest border border-zinc-200 bg-white">
-                  No orders placed yet.
+                <div className="border border-zinc-200 bg-white p-12 text-center flex flex-col items-center justify-center space-y-6">
+                  <div className="w-16 h-16 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-400">
+                    <ClipboardList className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h4 className="text-xs font-black uppercase text-zinc-800 tracking-widest">No order history available</h4>
+                    <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Start designing custom drops to request premium checkout options.</p>
+                  </div>
+                  <button 
+                    onClick={() => router.push("/customize")}
+                    className="px-6 py-2.5 bg-[#7a1c27] hover:bg-[#8e2430] text-white text-[9px] font-black uppercase tracking-widest transition-all shadow-md"
+                  >
+                    🎨 Open Design Studio
+                  </button>
                 </div>
               ) : (
                 orders.map((ord: any) => (
-                  <div key={ord.id} className="glass-panel p-6 border border-zinc-200 bg-white space-y-4">
+                  <div key={ord.id} className="border border-zinc-200 bg-white p-6 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center text-xs border-b border-zinc-100 pb-3 gap-2 uppercase tracking-wider font-bold">
                       <div>
                         <span className="text-zinc-400">Order ID:</span>
-                        <strong className="text-zinc-950 ml-1 font-extrabold">{ord.id}</strong>
+                        <strong className="text-zinc-950 ml-1 font-extrabold font-mono">{ord.id}</strong>
                       </div>
                       <div>
                         <span className="text-zinc-400">Total Amount:</span>
@@ -535,77 +601,124 @@ function DashboardContent() {
               )}
             </div>
           )}
- 
+  
           {/* DESIGNS TAB */}
           {activeTab === "designs" && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display font-serif">Your Custom Canvas Projects</h2>
+              <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display font-serif border-b border-zinc-200 pb-3">Your Saved Canvas Projects</h2>
  
               {designsLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  {[1, 2].map((i) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((i) => (
                     <div key={i} className="aspect-square bg-zinc-150 animate-pulse" />
                   ))}
                 </div>
               ) : designs.length === 0 ? (
-                <div className="glass-panel p-8 text-center text-zinc-400 text-xs uppercase tracking-widest border border-zinc-200 bg-white">
-                  No saved custom canvas projects yet.
+                <div className="border border-zinc-200 bg-white p-12 text-center flex flex-col items-center justify-center space-y-6">
+                  <div className="w-16 h-16 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-400">
+                    <Palette className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h4 className="text-xs font-black uppercase text-zinc-800 tracking-widest">No saved designs yet</h4>
+                    <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Craft custom streetwear artwork inside the customization sandbox.</p>
+                  </div>
+                  <button 
+                    onClick={() => router.push("/customize")}
+                    className="px-6 py-2.5 bg-[#7a1c27] hover:bg-[#8e2430] text-white text-[9px] font-black uppercase tracking-widest transition-all shadow-md"
+                  >
+                    🎨 Start Customizing
+                  </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                  {designs.map((ds: any) => (
-                    <div key={ds.id} className="glass-panel overflow-hidden flex flex-col border border-zinc-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-                      <div 
-                        className="aspect-square relative flex items-center justify-center p-4 border-b border-zinc-150 transition-colors select-none overflow-hidden"
-                        style={{ backgroundColor: getShirtHex(ds.shirt_color) }}
-                      >
-                        {/* Illustrated T-Shirt backdrop silhouette */}
-                        <svg className="absolute inset-0 w-full h-full p-2 pointer-events-none select-none z-0" viewBox="0 0 100 100">
-                          {/* Outer shape of T-Shirt - robust line */}
-                          <path d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" fill="none" stroke="#1f1f23" strokeWidth="2.0" opacity="0.85" />
-                          {/* Collar details */}
-                          <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#1f1f23" strokeWidth="1.6" opacity="0.85" />
-                          {/* Collar upper arch */}
-                          <path d="M 50 15 C 54.5 15 58.5 17 60 18.5 C 54.5 21 45.5 21 40 18.5 C 41.5 17 45.5 15 50 15 Z" fill="none" stroke="#1f1f23" strokeWidth="1.2" opacity="0.75" />
-                          {/* Shoulder creases */}
-                          <path d="M 33 42 C 33 42 35 60 33 75" fill="none" stroke="#1f1f23" strokeWidth="0.8" opacity="0.4" />
-                          <path d="M 67 42 C 67 42 65 60 67 75" fill="none" stroke="#1f1f23" strokeWidth="0.8" opacity="0.4" />
-                          {/* Sleeve seam stitches */}
-                          <path d="M 27 37 L 22 25" fill="none" stroke="#1f1f23" strokeWidth="1.0" opacity="0.5" strokeDasharray="1.5,1.5" />
-                          <path d="M 73 37 L 78 25" fill="none" stroke="#1f1f23" strokeWidth="1.0" opacity="0.5" strokeDasharray="1.5,1.5" />
-                        </svg>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {designs.map((ds: any) => {
+                    const designHex = getShirtHex(ds.shirt_color);
+                    const isCartSuccess = cartStatus === ds.id;
+                    
+                    return (
+                      <div key={ds.id} className="group overflow-hidden flex flex-col border border-zinc-200 bg-white hover:border-[#7a1c27] hover:shadow-lg transition-all p-3">
+                        
+                        {/* Media container matching aspect-1/1 and hover styling */}
+                        <div 
+                          className="aspect-[1/1] w-full relative flex items-center justify-center p-4 transition-colors select-none overflow-hidden"
+                          style={{ backgroundColor: designHex }}
+                        >
+                          <svg className="absolute inset-0 w-full h-full p-2 pointer-events-none select-none z-0" viewBox="0 0 100 100">
+                            <path d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.4" />
+                            <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.4" />
+                          </svg>
 
-                        {/* Print Zone Container sitting on top */}
-                        <div className="w-[62%] aspect-[4/5] relative z-10 flex items-center justify-center">
-                          <img src={ds.preview_image_url} alt="" className="h-full object-contain drop-shadow-md" />
+                          <div className="w-[62%] aspect-[4/5] relative z-10 flex items-center justify-center">
+                            <img src={ds.preview_image_url} alt="" className="h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-500" />
+                          </div>
+
+                          {/* Floating Badge */}
+                          <div className="absolute top-2 left-2 z-10">
+                            <span className="text-[8px] font-black uppercase text-[#7a1c27] bg-[#f5f2eb] border border-[#7a1c27]/20 px-2 py-0.5 tracking-widest shadow-sm">
+                              Saved Canvas
+                            </span>
+                          </div>
+
+                          {/* HOVER QUICK ACTIONS */}
+                          <div className="absolute inset-0 bg-[#7a1c27]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3 z-20">
+                            {/* Add to Cart */}
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleAddToCart({
+                                  id: ds.id,
+                                  title: `Saved Custom Tee (${ds.shirt_color})`,
+                                  shirt_color: ds.shirt_color,
+                                  preview_image_url: ds.preview_image_url,
+                                  price: 899.00
+                                });
+                              }}
+                              className={`p-3 text-white rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center ${isCartSuccess ? "bg-green-600" : "bg-[#7a1c27] hover:bg-[#8e2430]"}`}
+                              title="Add to Bag"
+                            >
+                              <ShoppingBag className="w-4 h-4" />
+                            </button>
+
+                            {/* Edit / Remix in Studio */}
+                            <button 
+                              onClick={() => router.push(`/customize?design_id=${ds.id}`)}
+                              className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
+                              title="Edit in Studio"
+                            >
+                              <ArrowLeftRight className="w-4 h-4" />
+                            </button>
+
+                            {/* Delete */}
+                            <button 
+                              onClick={() => handleDeleteSavedDesign(ds.id)}
+                              className="p-3 bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
+                              title="Delete Design"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
+
+                        {/* Card Info Footer */}
+                        <div className="pt-3 pb-1 flex-grow flex flex-col justify-between">
+                          <div className="space-y-1">
+                            <h4 className="text-xs uppercase font-extrabold text-zinc-900 tracking-wider font-display truncate group-hover:text-[#7a1c27] transition-colors">
+                              Custom T-Shirt Design
+                            </h4>
+                            <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-mono">
+                              {new Date(ds.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between pt-2.5 border-t border-zinc-100 mt-2.5 text-[9px] font-bold uppercase tracking-wider text-zinc-450">
+                            <span>Fabric: <span className="text-zinc-650 font-extrabold">{ds.shirt_color}</span></span>
+                            <span className="text-[#7a1c27] font-mono font-black">₹899.00</span>
+                          </div>
+                        </div>
+
                       </div>
-                      <div className="p-3 border-t border-zinc-150 bg-white flex items-center justify-between text-[9px] uppercase font-bold text-zinc-500 tracking-wider">
-                        <div className="flex flex-col gap-0.5">
-                          <span>Color: {ds.shirt_color}</span>
-                          <span className="text-[7px] text-zinc-400 font-mono tracking-normal lowercase">{new Date(ds.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button 
-                            onClick={() => {
-                              router.push(`/customize?design_id=${ds.id}`);
-                            }}
-                            className="text-[#7a1c27] font-black hover:underline cursor-pointer"
-                          >
-                            Edit
-                          </button>
-                          <span className="text-zinc-300">•</span>
-                          <button 
-                            onClick={() => handleDeleteSavedDesign(ds.id)}
-                            className="text-rose-600 font-black hover:text-rose-800 cursor-pointer flex items-center gap-0.5 animate-pulse-subtle"
-                            title="Delete Saved Design"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -614,9 +727,9 @@ function DashboardContent() {
           {/* PROFILE SETTINGS TAB */}
           {activeTab === "profile" && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display font-serif">Profile Configurations</h2>
+              <h2 className="text-xl font-bold uppercase tracking-wider text-zinc-900 font-display font-serif border-b border-zinc-200 pb-3">Profile Configurations</h2>
               
-              <div className="glass-panel p-6 border border-zinc-200 bg-white space-y-6">
+              <div className="border border-zinc-200 bg-white p-6 space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-zinc-150 pb-4 gap-4">
                   <div className="space-y-1">
                     <h4 className="text-sm font-black uppercase text-zinc-800 tracking-widest font-serif">Shipping Address List</h4>
@@ -779,7 +892,7 @@ function DashboardContent() {
         </div>
  
       </div>
-
+ 
       {/* Premium Confirmation warning Modal */}
       {deleteTargetId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -789,7 +902,7 @@ function DashboardContent() {
             <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center mx-auto text-rose-600">
               <AlertTriangle className="w-6 h-6 animate-pulse" />
             </div>
-
+ 
             <div className="space-y-2">
               <h3 className="text-sm uppercase font-extrabold tracking-widest text-[#7a1c27] font-serif">
                 Delete Custom Template?
@@ -798,7 +911,7 @@ function DashboardContent() {
                 This custom canvas streetwear design will be permanently erased. This action cannot be undone.
               </p>
             </div>
-
+ 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setDeleteTargetId(null)}
@@ -825,7 +938,7 @@ function DashboardContent() {
     </main>
   );
 }
-
+ 
 export default function DashboardPage() {
   return (
     <Suspense fallback={
