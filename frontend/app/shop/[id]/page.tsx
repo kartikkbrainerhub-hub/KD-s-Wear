@@ -254,7 +254,9 @@ export default function ProductDetailPage() {
     addToCart({
       product_id: product.id,
       title: product.title,
-      image: activeImage,
+      image: isCommunity
+        ? (selectedColor?.hex === "#f4f4f7" ? "/images/products/blank_tee_white.png" : "/images/products/blank_tee_black.png")
+        : activeImage,
       quantity: quantity,
       size: selectedSize,
       color: selectedColor?.hex || "#000000",
@@ -340,81 +342,65 @@ export default function ProductDetailPage() {
           
           {/* Images Presentation Grid */}
           <div className="space-y-4">
-            {isCommunity ? (
-              /* ── Community Drop: live SVG T-shirt silhouette with dynamic colour ── */
-              <div
-                className="w-full aspect-[4/5] border border-zinc-200/80 flex items-center justify-center relative overflow-hidden transition-colors duration-500 shadow-sm"
-                style={{ backgroundColor: selectedColor?.hex || "#0a0a0c" }}
-              >
-                {/* Badge */}
-                <span className="absolute top-4 left-4 text-[9px] font-black uppercase text-white bg-[#7a1c27] px-2 py-0.5 tracking-widest z-30">
-                  Community Drop
-                </span>
+            <div 
+              className="w-full aspect-[4/5] border border-zinc-200/80 flex items-center justify-center p-8 relative transition-colors duration-500 overflow-hidden"
+              style={{ backgroundColor: isCommunity ? selectedColor?.hex || "#f5f2eb" : "#f5f2eb" }}
+            >
+              {isCommunity && (
+                <>
+                  {/* Robust Boxy streetwear T-Shirt silhouette backdrop */}
+                  <svg className="absolute inset-0 w-full h-full p-4 pointer-events-none select-none z-0" viewBox="0 0 100 100">
+                    <path d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" fill="none" stroke="#1f1f23" strokeWidth="1.8" opacity="0.9" />
+                    <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="#1f1f23" strokeWidth="1.5" opacity="0.9" />
+                    <path d="M 50 15 C 54.5 15 58.5 17 60 18.5 C 54.5 21 45.5 21 40 18.5 C 41.5 17 45.5 15 50 15 Z" fill="none" stroke="#1f1f23" strokeWidth="1.2" opacity="0.75" />
+                    <path d="M 33 42 C 33 42 35 60 33 75" fill="none" stroke="#1f1f23" strokeWidth="0.8" opacity="0.5" />
+                    <path d="M 67 42 C 67 42 65 60 67 75" fill="none" stroke="#1f1f23" strokeWidth="0.8" opacity="0.5" />
+                    <path d="M 27 37 L 22 25" fill="none" stroke="#1f1f23" strokeWidth="1.0" opacity="0.6" strokeDasharray="1.5,1.5" />
+                    <path d="M 73 37 L 78 25" fill="none" stroke="#1f1f23" strokeWidth="1.0" opacity="0.6" strokeDasharray="1.5,1.5" />
+                  </svg>
+                </>
+              )}
 
-                {/* Boxy streetwear T-shirt SVG silhouette */}
-                <svg
-                  className="absolute inset-0 w-full h-full p-6 pointer-events-none select-none z-10"
-                  viewBox="0 0 100 100"
-                >
-                  <path d="M 50 15 C 44 15 38 18 38 18 L 22 25 L 14 42 L 23 46 L 27 37 L 27 88 L 73 88 L 73 37 L 77 46 L 86 42 L 78 25 L 62 18 C 62 18 56 15 50 15 Z" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" />
-                  <path d="M 38 18 C 38 18 44 21 50 21 C 56 21 62 18 62 18" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" />
-                  <path d="M 50 15 C 54.5 15 58.5 17 60 18.5 C 54.5 21 45.5 21 40 18.5 C 41.5 17 45.5 15 50 15 Z" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" />
-                  <path d="M 33 42 C 33 42 35 60 33 75" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" />
-                  <path d="M 67 42 C 67 42 65 60 67 75" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" />
-                  <path d="M 27 37 L 22 25" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.0" strokeDasharray="1.5,1.5" />
-                  <path d="M 73 37 L 78 25" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.0" strokeDasharray="1.5,1.5" />
-                </svg>
-
-                {/* Design overlay: preset text OR custom transparent canvas print */}
-                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none select-none">
-                  {productId.startsWith("preset-") && textLabel ? (
-                    <span
-                      className="text-base sm:text-lg font-black uppercase tracking-widest filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] rotate-[-8deg]"
-                      style={{ fontFamily: presetFont, color: presetTextColor }}
+              {isCommunity && productId.startsWith("preset-") ? (
+                <div className="w-[60%] aspect-[4/5] relative z-10 flex items-center justify-center pb-8">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-20 pb-5">
+                    <span 
+                      className="text-xs sm:text-sm font-black uppercase tracking-widest filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] rotate-[-8deg] text-center"
+                      style={{ 
+                        fontFamily: presetFont,
+                        color: presetTextColor
+                      }}
                     >
                       {textLabel}
                     </span>
-                  ) : (
-                    <img
-                      src={activeImage}
-                      alt={product.title}
-                      className="w-3/5 h-3/5 object-contain opacity-90"
-                    />
-                  )}
+                  </div>
                 </div>
-
-                {/* Colour name label at bottom */}
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center z-30">
-                  <span className="text-[8px] font-black uppercase tracking-widest text-white/60 bg-black/20 px-2 py-0.5">
-                    {selectedColor?.name}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              /* ── Official Release: standard image gallery ── */
-              <>
-                <div className="w-full aspect-[4/5] bg-[#f5f2eb] border border-zinc-200/80 flex items-center justify-center p-8 relative">
-                  <img
-                    src={activeImage}
-                    alt={product.title}
-                    className="w-full h-full object-contain relative z-10"
+              ) : (
+                <div className={isCommunity ? "w-[60%] aspect-[4/5] relative z-10 flex items-center justify-center" : "w-full h-full relative z-10 flex items-center justify-center"}>
+                  <img 
+                    src={activeImage} 
+                    alt={product.title} 
+                    className="w-full h-full object-contain" 
                   />
-                  <span className="absolute top-4 left-4 text-[9px] font-black uppercase text-white bg-[#7a1c27] px-2 py-0.5 tracking-widest">
-                    Premium Drop
-                  </span>
                 </div>
-                <div className="grid grid-cols-4 gap-3">
-                  {imagesList.map((img: string, idx: number) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveImage(img)}
-                      className={`aspect-square bg-[#f5f2eb] border p-1 transition-all ${activeImage === img ? "border-[#7a1c27] scale-95" : "border-zinc-200 hover:border-zinc-300"}`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-contain" />
-                    </button>
-                  ))}
-                </div>
-              </>
+              )}
+              <span className="absolute top-4 left-4 text-[9px] font-black uppercase text-white bg-[#7a1c27] px-2 py-0.5 tracking-widest z-20">
+                {isCommunity ? "Community Drop" : "Premium Drop"}
+              </span>
+            </div>
+            
+            {!isCommunity && (
+              <div className="grid grid-cols-4 gap-3">
+                {imagesList.map((img: string, idx: number) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setActiveImage(img)}
+                    className={`aspect-square bg-[#f5f2eb] border p-1 transition-all ${activeImage === img ? "border-[#7a1c27] scale-95" : "border-zinc-200 hover:border-zinc-300"}`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-contain" />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
  
@@ -459,79 +445,56 @@ export default function ProductDetailPage() {
             {/* Color Swatch Selector */}
             <div className="space-y-3">
               <label className="text-[10px] uppercase font-bold text-zinc-450 tracking-wider">Garment Palette</label>
-
               {isCommunity ? (
-                /* ── Community: full 20-colour studio palette with category tabs ── */
                 <div className="space-y-3">
-                  {/* Category filter tabs */}
-                  <div className="flex flex-wrap gap-1">
+                  {/* Category filters */}
+                  <div className="flex flex-wrap gap-1 pb-1">
                     {COLOR_CATEGORIES.map((cat) => (
                       <button
                         key={cat}
                         onClick={() => setColorCategory(cat)}
-                        className={`px-2.5 py-0.5 text-[8px] font-black uppercase tracking-widest border transition-all ${
-                          colorCategory === cat
-                            ? "bg-[#7a1c27] border-[#7a1c27] text-white"
-                            : "bg-white border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                        }`}
+                        className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border transition-all ${colorCategory === cat ? "bg-[#7a1c27] border-[#7a1c27] text-white" : "bg-white border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}
                       >
                         {cat}
                       </button>
                     ))}
                   </div>
 
-                  {/* 20-colour grid */}
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {(colorCategory === "All"
-                      ? SHIRT_COLORS
-                      : SHIRT_COLORS.filter((c) => c.category === colorCategory)
-                    ).map((c) => (
+                  {/* 20 color grid selector */}
+                  <div className="grid grid-cols-5 xs:grid-cols-6 sm:grid-cols-8 md:grid-cols-5 gap-1.5 max-w-[280px]">
+                    {(colorCategory === "All" ? SHIRT_COLORS : SHIRT_COLORS.filter(c => c.category === colorCategory)).map((c) => (
                       <button
                         key={c.name}
                         onClick={() => setSelectedColor(c)}
-                        title={`${c.name} · ${c.hex}`}
-                        className={`relative w-9 h-9 border-2 transition-all ${
-                          selectedColor?.name === c.name
-                            ? "border-[#7a1c27] scale-105 shadow-md"
-                            : "border-zinc-200 hover:border-zinc-400"
-                        }`}
+                        title={`${c.name} (${c.hex})`}
+                        className={`w-8 h-8 border transition-all flex items-center justify-center rounded-none relative ${selectedColor?.name === c.name ? "border-[#7a1c27] scale-105 shadow-sm" : "border-zinc-200 hover:border-zinc-300"}`}
                       >
-                        <span
-                          className="absolute inset-0.5 inline-block"
+                        <span 
+                          className="w-6 h-6 inline-block rounded-none shadow-inner"
                           style={{ backgroundColor: c.hex }}
                         />
                         {selectedColor?.name === c.name && (
-                          <span className="absolute bottom-0 right-0 bg-[#7a1c27] text-white text-[6px] w-2.5 h-2.5 flex items-center justify-center font-black z-10">
-                            ✓
-                          </span>
+                          <span className="absolute bottom-0 right-0 bg-[#7a1c27] text-white text-[7px] w-2.5 h-2.5 flex items-center justify-center font-bold">✓</span>
                         )}
                       </button>
                     ))}
                   </div>
-
-                  {/* Active colour readout */}
-                  <div className="flex items-center space-x-2 pt-0.5">
-                    <span
-                      className="w-4 h-4 border border-zinc-300 shadow-sm flex-shrink-0"
-                      style={{ backgroundColor: selectedColor?.hex }}
-                    />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-zinc-700">{selectedColor?.name}</span>
-                    <span className="text-[9px] font-mono text-zinc-400 ml-auto">{selectedColor?.hex}</span>
+                  <div className="flex items-center space-x-2 pt-1">
+                    <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">Active Color:</span>
+                    <span className="text-[9px] font-black text-zinc-800 uppercase tracking-widest">{selectedColor?.name}</span>
+                    <span className="text-[8px] font-mono text-zinc-400">({selectedColor?.hex})</span>
                   </div>
                 </div>
               ) : (
-                /* ── Official: simple per-product colour swatches ── */
                 <div className="flex items-center space-x-3">
                   {colorsList.map((col: any) => (
-                    <button
+                    <button 
                       key={col.name}
                       onClick={() => setSelectedColor(col)}
                       title={col.name}
-                      className={`w-7 h-7 rounded-full border-2 transition-all flex items-center justify-center ${
-                        selectedColor?.name === col.name ? "border-[#7a1c27] scale-110" : "border-transparent hover:scale-105"
-                      }`}
+                      className={`w-7 h-7 rounded-full border-2 transition-all flex items-center justify-center ${selectedColor?.name === col.name ? "border-[#7a1c27] scale-110" : "border-transparent hover:scale-105"}`}
                     >
-                      <span
+                      <span 
                         className="w-5 h-5 rounded-full inline-block border border-zinc-200 shadow-inner"
                         style={{ backgroundColor: col.hex }}
                       />
