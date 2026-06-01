@@ -129,41 +129,8 @@ export default function ProductCard({ product }: { product: ProductProps }) {
             )}
           </div>
 
-          {/* Quick Actions Hover panel */}
-          <div className="absolute inset-0 bg-[#7a1c27]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3 z-20">
-            {product.is_customizable ? (
-              <button
-                className="p-3 bg-[#7a1c27] hover:bg-[#8e2430] text-white rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center"
-                title="Design Custom T-Shirt"
-              >
-                <Palette className="w-4 h-4" />
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={handleQuickAdd}
-                  className="p-3 bg-[#7a1c27] hover:bg-[#8e2430] text-white rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center"
-                  title="Quick Add to Bag"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                </button>
-                <button
-                  className="p-3 bg-white hover:bg-zinc-50 text-zinc-950 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border border-zinc-200"
-                  title="View Details"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-              </>
-            )}
-
-            <button
-              onClick={handleWishlist}
-              className={`p-3 rounded-none shadow-lg transition-transform hover:scale-105 flex items-center justify-center border ${isLiked ? "bg-[#7a1c27] text-white border-[#7a1c27]" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-              title="Add to Wishlist"
-            >
-              <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-            </button>
-          </div>
+          {/* Subtle hover ring — no button overlay */}
+          <div className="absolute inset-0 ring-inset ring-0 group-hover:ring-2 group-hover:ring-[#7a1c27]/20 transition-all duration-300 pointer-events-none z-20" />
         </div>
 
         {/* Card Description Info */}
